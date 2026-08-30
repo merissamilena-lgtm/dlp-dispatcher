@@ -8,6 +8,9 @@
     { id: 28, park: 'Disney Adventure World' }
   ];
   const REFRESH_MS = 5 * 60 * 1000;
+  const DLP_GEOFENCE_METRES = 5000;
+  const FEED_AGING_MIN = 10;
+  const FEED_STALE_MIN = 20;
 
   const AREAS = {
     'Disneyland Park entrance': { lat: 48.87070, lon: 2.77972, park: 'Disneyland Park' },
@@ -78,12 +81,45 @@
     { p: 'tangled', area: 'World of Frozen', duration: 4, indoor: false }
   ];
 
+  const EXPERIENCE_RULES = [
+    { p: 'disneyland railroad', category: 'transport', label: 'Transport', bonus: -34 },
+    { p: 'horse drawn streetcars', category: 'transport', label: 'Transport', bonus: -34 },
+    { p: 'main street vehicles', category: 'transport', label: 'Transport', bonus: -34 },
+    { p: 'rustler roundup', category: 'minor', label: 'Side activity', bonus: -28 },
+    { p: 'shootin gallery', category: 'minor', label: 'Side activity', bonus: -28 },
+    { p: 'taniere du dragon', category: 'walkthrough', label: 'Walkthrough', bonus: -20 },
+    { p: 'dragon s lair', category: 'walkthrough', label: 'Walkthrough', bonus: -20 },
+    { p: 'passage enchante d aladdin', category: 'walkthrough', label: 'Walkthrough', bonus: -20 },
+    { p: 'adventure isle', category: 'walkthrough', label: 'Walkthrough', bonus: -18 },
+    { p: 'mysteres du nautilus', category: 'walkthrough', label: 'Walkthrough', bonus: -18 },
+    { p: 'nautilus', category: 'walkthrough', label: 'Walkthrough', bonus: -18 },
+    { p: 'alice s curious labyrinth', category: 'walkthrough', label: 'Walkthrough', bonus: -15 },
+    { p: 'labyrinth', category: 'walkthrough', label: 'Walkthrough', bonus: -15 },
+    { p: 'liberty arcade', category: 'walkthrough', label: 'Walkthrough', bonus: -24 },
+    { p: 'discovery arcade', category: 'walkthrough', label: 'Walkthrough', bonus: -24 },
+    { p: 'pirate galleon', category: 'walkthrough', label: 'Walkthrough', bonus: -20 },
+    { p: 'plage des pirates', category: 'playground', label: 'Play area', bonus: -24 },
+    { p: 'meet mickey', category: 'character', label: 'Character', bonus: -4 },
+    { p: 'princess pavilion', category: 'character', label: 'Character', bonus: -4 },
+    { p: 'hero training center', category: 'character', label: 'Character', bonus: -4 },
+    { p: 'welcome to starport', category: 'character', label: 'Character', bonus: -4 }
+  ];
+
+  const HEADLINE_PATTERNS = [
+    'big thunder', 'peter pan', 'hyperspace mountain', 'crush', 'frozen ever after',
+    'tower of terror', 'ratatouille', 'spider man', 'spiderman', 'flight force'
+  ];
+
   const state = {
     rides: [],
     entities: [],
     source: null,
     sourceUpdated: null,
+    secondarySource: null,
+    secondaryUpdated: null,
+    feedDisagreements: [],
     gps: null,
+    gpsAccuracy: null,
     activeFilter: 'all',
     search: '',
     priorities: loadJSON('dlpPriorities', {}),
@@ -91,7 +127,7 @@
     settings: Object.assign({
       mode: 'balanced', singleRider: false, softPlans: false,
       mealBuffer: 15, trainBuffer: 35, walkSpeed: 55, routeFactor: 1.25,
-      preview: false, previewDate: '2026-10-30', previewTime: '17:00', location: 'Disneyland Park entrance'
+      preview: false, previewDate: '2026-10-30', previewTime: '17:00', location: 'Disneyland Park entrance', locationSource: 'default'
     }, loadJSON('dlpSettings', {}))
   };
 
@@ -114,12 +150,19 @@
   function baselineFor(name) {
     const n = norm(name);
     const hit = BASELINES.find(([p]) => n.includes(p));
-    return hit ? hit[1] : 25;
+    return hit ? hit[1] : null;
+  }
+  function experienceFor(name) {
+    const n = norm(name);
+    const special = EXPERIENCE_RULES.find(x => n.includes(x.p));
+    if (special) return special;
+    if (HEADLINE_PATTERNS.some(p => n.includes(p))) return { category: 'headline', label: 'Headline ride', bonus: 15 };
+    return { category: 'ride', label: 'Ride', bonus: 5 };
   }
   function metaFor(name) {
     const n = norm(name);
     const hit = META.find(x => n.includes(x.p));
-    return hit || { area: null, duration: 5, indoor: false };
+    return { ...(hit || { area: null, duration: 5, indoor: false }), ...experienceFor(name) };
   }
   function areaPoint(area) { return area && AREAS[area] ? AREAS[area] : null; }
 
@@ -143,13 +186,22 @@
     const m = metaFor(ride.name);
     return areaPoint(m.area) || (ride.park === 'Disney Adventure World' ? areaPoint('Disney Adventure World entrance') : areaPoint('Disneyland Park entrance'));
   }
+  function dlpEntrancePoint() { return areaPoint('Disneyland Park entrance'); }
+  function gpsDistanceFromDLP() { return state.gps ? haversine(state.gps, dlpEntrancePoint()) : null; }
+  function gpsNearDLP() { const d = gpsDistanceFromDLP(); return d != null && d <= DLP_GEOFENCE_METRES; }
+  function sessionMode() { return !state.settings.preview && gpsNearDLP() ? 'LIVE' : 'TEST'; }
   function currentPoint() {
-    if (state.gps) return state.gps;
+    if (gpsNearDLP()) return state.gps;
     return areaPoint(state.settings.location) || areaPoint('Disneyland Park entrance');
   }
   function currentPark() {
-    if (state.gps) return nearestArea(state.gps).park;
+    if (gpsNearDLP()) return nearestArea(state.gps).park;
     return (areaPoint(state.settings.location) || {}).park;
+  }
+  function locationSourceLabel() {
+    if (gpsNearDLP()) return 'GPS';
+    if (state.gps) return `GPS outside resort, routing uses ${state.settings.locationSource || 'default'}`;
+    return state.settings.locationSource === 'manual' ? 'manual' : 'default';
   }
   function nearestArea(point) {
     return Object.entries(AREAS).map(([name,p]) => ({name, ...p, d:haversine(point,p)})).sort((a,b)=>a.d-b.d)[0];
@@ -237,7 +289,7 @@
       }
     }
     const rides = [...map.values()];
-    return { rides, entities: [], source: 'Queue-Times.com fallback', updated: newestTimestamp(rides) };
+    return { rides, entities: [], source: 'Queue-Times.com', updated: newestTimestamp(rides) };
   }
 
   function newestTimestamp(rides) {
@@ -256,19 +308,64 @@
     return 'Disneyland Park';
   }
 
+  function ageMinutes(date) {
+    if (!date || isNaN(date)) return null;
+    return Math.max(0, Math.floor((Date.now() - date.getTime()) / 60000));
+  }
+  function feedFreshness() {
+    const mins = ageMinutes(state.sourceUpdated);
+    if (mins == null) return { level: 'unknown', mins: null };
+    if (mins > FEED_STALE_MIN) return { level: 'stale', mins };
+    if (mins > FEED_AGING_MIN) return { level: 'aging', mins };
+    return { level: 'fresh', mins };
+  }
+  function compareFeeds(primaryRides, secondaryRides) {
+    const secondaryMap = new Map(secondaryRides.map(r => [keyFor(r.name), r]));
+    const disagreements = [];
+    for (const r of primaryRides) {
+      delete r.feedDisagreement;
+      delete r.secondaryWait;
+      delete r.secondaryStatus;
+      const other = secondaryMap.get(keyFor(r.name));
+      if (!other) continue;
+      r.secondaryWait = other.wait;
+      r.secondaryStatus = other.status;
+      const pOpen = r.status === 'OPERATING';
+      const sOpen = other.status === 'OPERATING';
+      if (pOpen !== sOpen && !['UNKNOWN', null].includes(r.status) && !['UNKNOWN', null].includes(other.status)) {
+        r.feedDisagreement = { kind: 'status', primary: r.status, secondary: other.status };
+      } else if (pOpen && sOpen && Number.isFinite(r.wait) && Number.isFinite(other.wait)) {
+        const diff = Math.abs(r.wait - other.wait);
+        if (diff >= 15) r.feedDisagreement = { kind: 'wait', primary: r.wait, secondary: other.wait, diff };
+      }
+      if (r.feedDisagreement) disagreements.push({ name: r.name, ...r.feedDisagreement });
+    }
+    return disagreements;
+  }
+
   async function refreshLive() {
     setStatus('loading','Connecting');
     $('#refreshBtn').disabled = true;
     try {
-      let data;
-      try { data = await fetchThemeParks(); }
-      catch (e) { console.warn(e); data = await fetchQueueTimes(); }
-      state.rides = data.rides.filter(r => r.name && !/entry to world of frozen/i.test(r.name));
-      state.entities = data.entities;
-      state.source = data.source;
-      state.sourceUpdated = data.updated;
+      const [tpwResult, qtResult] = await Promise.allSettled([fetchThemeParks(), fetchQueueTimes()]);
+      const tpw = tpwResult.status === 'fulfilled' ? tpwResult.value : null;
+      const qt = qtResult.status === 'fulfilled' ? qtResult.value : null;
+      if (!tpw && !qt) throw new Error('Both live feeds failed');
+
+      const primary = tpw || qt;
+      const secondary = tpw && qt ? qt : null;
+      state.rides = primary.rides.filter(r => r.name && !/entry to world of frozen/i.test(r.name));
+      state.entities = primary.entities || [];
+      state.source = primary.source;
+      state.sourceUpdated = primary.updated;
+      state.secondarySource = secondary?.source || null;
+      state.secondaryUpdated = secondary?.updated || null;
+      state.feedDisagreements = secondary ? compareFeeds(state.rides, secondary.rides) : [];
       enhanceRidesFromEntities();
-      setStatus('ok', data.source.includes('fallback') ? 'Fallback live' : 'Live');
+
+      const freshness = feedFreshness();
+      const statusText = !tpw ? 'Fallback live' : freshness.level === 'stale' ? 'Live data stale' : 'Live';
+      setStatus(freshness.level === 'stale' ? 'warn' : 'ok', statusText);
       renderAll();
     } catch (e) {
       console.error(e);
@@ -294,6 +391,7 @@
 
   function evaluateRide(ride, now, commitment) {
     if (ride.status !== 'OPERATING' || ride.wait == null) return null;
+    if (ride.feedDisagreement?.kind === 'status') return null;
     const k = keyFor(ride.name);
     if (state.priorities[k] === 'skip') return null;
     const meta = metaFor(ride.name);
@@ -317,16 +415,27 @@
     if (!fits) return null;
 
     const avg = baselineFor(ride.name);
-    const opportunity = Math.max(-25,Math.min(35,(avg-chosenWait)*1.2));
+    let opportunity = 0;
+    if (avg != null && ['ride','headline'].includes(meta.category)) {
+      opportunity = Math.max(-25, Math.min(chosenWait === 0 ? 15 : 35, (avg-chosenWait)*1.2));
+    }
     const priority = state.priorities[k] || 'neutral';
-    let score = {must:55,want:27,neutral:0}[priority] || 0;
+    let score = {must:65,want:30,neutral:0}[priority] || 0;
+    score += meta.bonus;
     score += opportunity;
-    score += Math.max(-8,(30-Math.min(chosenWait,60))*.25);
+
+    if (['ride','headline'].includes(meta.category)) score += Math.max(-8,(30-Math.min(chosenWait,60))*.22);
+    else if (chosenWait === 0) score -= 8;
+
     const distWeight = state.settings.mode === 'lowWalk' ? 2.4 : 1.15;
     score -= walkTo * distWeight;
     if (state.settings.mode === 'queueHunter') score += opportunity*.45;
     if (state.settings.mode === 'rain') score += meta.indoor ? 12 : -25;
-    if (state.done[k]) score -= 35;
+    if (state.done[k]) score -= 45;
+    if (ride.feedDisagreement?.kind === 'wait') score -= 12;
+    const freshness = feedFreshness();
+    if (freshness.level === 'aging') score -= 5;
+    if (freshness.level === 'stale') score -= 18;
     if (commitment && target) {
       const slack = minutesToTarget - target.totalNeeded;
       score += Math.min(8, slack*.08);
@@ -336,6 +445,18 @@
     return { ride, score, walkTo, walkOnward, chosenWait, queueLabel, rideDuration, avg, opportunity, priority, finish, meta, minutesToTarget, target };
   }
 
+  function recommendationReason(x) {
+    const bits = [];
+    if (x.priority === 'must') bits.push('marked MUST');
+    else if (x.priority === 'want') bits.push('marked WANT');
+    if (x.avg != null && x.avg - x.chosenWait >= 10) bits.push(`${x.avg - x.chosenWait}m below usual`);
+    if (x.walkTo <= 4) bits.push('very close');
+    else if (x.walkTo <= 8) bits.push('nearby');
+    if (x.meta.category === 'headline') bits.push('headline ride');
+    if (x.ride.feedDisagreement?.kind === 'wait') bits.push('feeds disagree on wait');
+    return bits.length ? bits.join(', ') : 'solid fit for the current rules';
+  }
+
   function topRecommendations() {
     const now = plannerNow(), c = nextCommitment(now);
     return state.rides.map(r=>evaluateRide(r,now,c)).filter(Boolean).sort((a,b)=>b.score-a.score).slice(0,3);
@@ -343,11 +464,30 @@
 
   function renderAll() {
     syncControls();
+    renderSession();
     renderHero();
     renderRecommendations();
     renderWaitBoard();
     renderSchedule();
     renderSourceAge();
+  }
+
+  function renderSession() {
+    const live = sessionMode() === 'LIVE';
+    const banner = $('#sessionBanner');
+    banner.className = `session-banner ${live ? 'live' : 'test'}`;
+    $('#sessionMode').textContent = live ? 'LIVE MODE' : 'TEST MODE';
+    if (live) {
+      const near = nearestArea(state.gps);
+      $('#sessionDetail').textContent = `GPS confirms you are at Disneyland Paris near ${near.name}. Live routing is enabled.`;
+    } else if (state.settings.preview) {
+      $('#sessionDetail').textContent = 'Preview clock is active. This is a simulation using current queue data.';
+    } else if (state.gps) {
+      const km = (gpsDistanceFromDLP()/1000).toFixed(1);
+      $('#sessionDetail').textContent = `GPS is ${km} km from Disneyland Paris. Routing uses the selected test area, not your physical location.`;
+    } else {
+      $('#sessionDetail').textContent = 'No in-resort GPS fix. Recommendations are a simulation using the selected test area.';
+    }
   }
 
   function renderHero() {
@@ -373,17 +513,18 @@
     if (!state.rides.length) { box.innerHTML = '<div class="card loading">No live ride data yet.</div>'; return; }
     if (!recs.length) { box.innerHTML = '<div class="card empty">Nothing operating safely fits the current rules. Head toward the next anchor or relax the filters.</div>'; return; }
     box.innerHTML = recs.map((x,i)=>{
-      const opp = x.avg-x.chosenWait;
-      const oppText = opp >= 10 ? `${opp}m below 2026 avg` : opp <= -10 ? `${Math.abs(opp)}m above 2026 avg` : 'near usual wait';
+      const opp = x.avg == null ? null : x.avg-x.chosenWait;
+      const oppText = opp == null ? 'no historical baseline' : opp >= 10 ? `${opp}m below 2026 avg` : opp <= -10 ? `${Math.abs(opp)}m above 2026 avg` : 'near usual wait';
       const onward = x.target ? ` · ${x.walkOnward}m onward walk` : '';
       const priorityTag = x.priority === 'must' ? '<span class="tag good">MUST</span>' : x.priority === 'want' ? '<span class="tag">WANT</span>' : '';
+      const disagreeTag = x.ride.feedDisagreement?.kind === 'wait' ? '<span class="tag warn">FEEDS DISAGREE</span>' : '';
       return `<article class="card reco">
         <div class="rank">${i+1}</div>
         <div class="ride-name">${esc(x.ride.name)}</div>
         <div class="muted small">${esc(x.ride.park)} · ${esc(x.meta.area || 'area unknown')}</div>
         <div class="big-wait">${x.chosenWait}<span> min ${x.queueLabel}</span></div>
-        <div class="tags"><span class="tag ${opp>=10?'good':opp<=-10?'warn':''}">${oppText}</span><span class="tag">${x.walkTo}m walk</span>${priorityTag}</div>
-        <div class="why">Estimated off ride about <strong>${parisTime(x.finish)}</strong>${onward}. ${x.meta.indoor?'Mostly indoors.':'Outdoor exposure possible.'}</div>
+        <div class="tags"><span class="tag category">${esc(x.meta.label)}</span><span class="tag ${opp!=null&&opp>=10?'good':opp!=null&&opp<=-10?'warn':''}">${oppText}</span><span class="tag">${x.walkTo}m walk</span>${priorityTag}${disagreeTag}</div>
+        <div class="why"><strong>Why:</strong> ${esc(recommendationReason(x))}. Estimated off ride about <strong>${parisTime(x.finish)}</strong>${onward}.</div>
       </article>`;
     }).join('');
   }
@@ -403,8 +544,9 @@
       const m = metaFor(r.name);
       const status = r.status === 'OPERATING' ? (r.wait == null ? 'Open' : `${r.wait} min`) : prettyStatus(r.status);
       const sr = Number.isFinite(r.singleRiderWait) ? ` · Single Rider ${r.singleRiderWait}m` : '';
+      const disagreement = r.feedDisagreement ? ` · ⚠ ${r.feedDisagreement.kind === 'status' ? 'feeds disagree on status' : `other feed ${r.secondaryWait}m`}` : '';
       return `<div class="ride-row ${done?'done':''}">
-        <div><div class="ride-title">${esc(r.name)}</div><div class="ride-sub">${esc(r.park)}${m.area?` · ${esc(m.area)}`:''}${sr}</div></div>
+        <div><div class="ride-title">${esc(r.name)}</div><div class="ride-sub">${esc(r.park)}${m.area?` · ${esc(m.area)}`:''} · ${esc(m.label)}${sr}${disagreement}</div></div>
         <div class="ride-actions">
           <button class="priority-btn ${pri}" data-priority="${esc(k)}">${priorityLabel(pri)}</button>
           <button class="done-btn ${done?'on':''}" data-done="${esc(k)}">${done?'DONE':'Mark done'}</button>
@@ -424,9 +566,21 @@
   }
 
   function renderSourceAge() {
-    if (!state.sourceUpdated) { $('#sourceAge').textContent = 'Waiting for data'; return; }
-    const mins = Math.max(0, Math.floor((Date.now()-state.sourceUpdated.getTime())/60000));
-    $('#sourceAge').textContent = `${state.source} · updated ${mins < 1 ? 'just now' : `${mins}m ago`}${mins>10?' · STALE?':''}`;
+    if (!state.sourceUpdated) {
+      $('#sourceAge').textContent = 'Waiting for data';
+      $('#feedHealth').textContent = 'Cross-check not available yet.';
+      return;
+    }
+    const fresh = feedFreshness();
+    const age = fresh.mins < 1 ? 'just now' : `${fresh.mins}m ago`;
+    const flag = fresh.level === 'stale' ? ' · STALE' : fresh.level === 'aging' ? ' · AGING' : '';
+    $('#sourceAge').textContent = `${state.source} · updated ${age}${flag}`;
+    if (state.secondarySource) {
+      const count = state.feedDisagreements.length;
+      $('#feedHealth').textContent = count ? `${state.secondarySource} cross-check: ${count} disagreement${count===1?'':'s'}. Status conflicts are excluded from recommendations.` : `${state.secondarySource} cross-check: no material disagreements.`;
+    } else {
+      $('#feedHealth').textContent = 'Only one live source is reachable. Treat recommendations with a little more caution.';
+    }
   }
 
   function prettyStatus(s='UNKNOWN') { return s.toLowerCase().replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase()); }
@@ -440,7 +594,7 @@
   }
   function toggleDone(k) { state.done[k] = !state.done[k]; if (!state.done[k]) delete state.done[k]; save(); renderAll(); }
   function esc(s='') { return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-  function setStatus(kind,text) { const e=$('#liveStatus'); e.className=`status-pill ${kind==='ok'?'ok':kind==='bad'?'bad':''}`; e.querySelector('span:last-child').textContent=text; }
+  function setStatus(kind,text) { const e=$('#liveStatus'); e.className=`status-pill ${kind==='ok'?'ok':kind==='bad'?'bad':kind==='warn'?'warn':''}`; e.querySelector('span:last-child').textContent=text; }
   function toast(msg) { const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),2200); }
 
   function syncControls() {
@@ -454,7 +608,7 @@
     $('#trainBuffer').value = state.settings.trainBuffer;
     $('#walkSpeed').value = state.settings.walkSpeed;
     $('#routeFactor').value = state.settings.routeFactor;
-    if (!state.gps) $('#locationSelect').value = state.settings.location;
+    if (!gpsNearDLP()) $('#locationSelect').value = state.settings.location;
   }
 
   function initLocationSelect() {
@@ -468,10 +622,17 @@
     $('#gpsBtn').disabled = true; $('#gpsBtn').textContent = 'Locating...';
     navigator.geolocation.getCurrentPosition(pos=>{
       state.gps = { lat:pos.coords.latitude, lon:pos.coords.longitude, park:null };
+      state.gpsAccuracy = pos.coords.accuracy;
       const near = nearestArea(state.gps);
-      $('#gpsBtn').textContent = `GPS: ${near.name}`;
+      if (gpsNearDLP()) {
+        $('#gpsBtn').textContent = `GPS: ${near.name}`;
+        toast(`LIVE mode enabled near ${near.name}`);
+      } else {
+        const km = (gpsDistanceFromDLP()/1000).toFixed(1);
+        $('#gpsBtn').textContent = 'GPS: outside DLP';
+        toast(`GPS is ${km} km from DLP. Staying in TEST mode.`);
+      }
       $('#gpsBtn').disabled = false;
-      toast(`Using GPS near ${near.name}`);
       renderAll();
     }, err=>{
       $('#gpsBtn').disabled = false; $('#gpsBtn').textContent = 'Use my location';
@@ -481,20 +642,46 @@
 
   async function copyPacket() {
     const now = plannerNow(), c = nextCommitment(now), recs = topRecommendations();
-    const location = state.gps ? `GPS near ${nearestArea(state.gps).name}` : state.settings.location;
-    const done = Object.keys(state.done).filter(k=>state.done[k]);
+    const live = sessionMode() === 'LIVE';
+    const near = state.gps ? nearestArea(state.gps) : null;
+    const location = live ? `GPS near ${near.name}` : state.settings.location;
+    const doneKeys = Object.keys(state.done).filter(k=>state.done[k]);
+    const doneNames = doneKeys.map(k => state.rides.find(r => keyFor(r.name) === k)?.name || k);
+    const fresh = feedFreshness();
+    let sessionDetail;
+    if (live) sessionDetail = `GPS confirmed within Disneyland Paris; accuracy about ${Math.round(state.gpsAccuracy || 0)}m`;
+    else if (state.settings.preview) sessionDetail = 'TEST MODE; preview simulation; physical park presence is not used';
+    else if (state.gps) sessionDetail = `NOT PHYSICALLY IN PARK CONFIRMED; GPS ${(gpsDistanceFromDLP()/1000).toFixed(1)} km from DLP`;
+    else sessionDetail = 'TEST MODE; physical park presence unconfirmed because there is no in-resort GPS fix';
+
+    let commitmentLine = 'Next fixed point: none active';
+    let safeMinutesLine = 'Safe time remaining: not constrained by a fixed point';
+    if (c) {
+      const safeAt = new Date(parisDateTime(c.date,c.time).getTime()-bufferFor(c)*60000);
+      const safeMins = Math.max(0, Math.floor((safeAt-now)/60000));
+      commitmentLine = `Next fixed point: ${c.name} at ${c.time}; target arrival ${parisTime(safeAt)}; area ${c.area}`;
+      safeMinutesLine = `Safe time remaining: ${safeMins} minutes until target arrival`;
+    }
+
     const lines = [
-      'DLP DISPATCHER STATUS',
+      'DLP DISPATCHER STATUS v0.2',
+      `Session: ${live ? 'LIVE' : 'TEST'}`,
+      `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
-      `Location: ${location}`,
+      `Routing location: ${location}`,
+      `Location source: ${locationSourceLabel()}`,
       `Mode: ${state.settings.mode}; Single Rider: ${state.settings.singleRider?'yes':'no'}`,
-      `Live source: ${state.source || 'none'}${state.sourceUpdated?`; updated ${state.sourceUpdated.toISOString()}`:''}`,
-      c ? `Next fixed point: ${c.name} at ${c.time}; target arrival ${parisTime(new Date(parisDateTime(c.date,c.time).getTime()-bufferFor(c)*60000))}; area ${c.area}` : 'Next fixed point: none active',
-      `Top engine picks: ${recs.map((x,i)=>`${i+1}) ${x.ride.name} ${x.chosenWait}m ${x.queueLabel}, ${x.walkTo}m walk`).join(' | ') || 'none'}`,
-      `Done this trip: ${done.length ? done.join(', ') : 'none marked'}`,
-      'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
+      `Primary live source: ${state.source || 'none'}${state.sourceUpdated?`; updated ${state.sourceUpdated.toISOString()}`:''}; freshness ${fresh.level}${fresh.mins==null?'':` (${fresh.mins}m old)`}`,
+      `Secondary cross-check: ${state.secondarySource || 'unavailable'}; material disagreements ${state.feedDisagreements.length}`,
+      commitmentLine,
+      safeMinutesLine,
+      `Top engine picks: ${recs.map((x,i)=>`${i+1}) ${x.ride.name} ${x.chosenWait}m ${x.queueLabel}, ${x.walkTo}m walk, ${x.meta.label}; reason: ${recommendationReason(x)}`).join(' | ') || 'none'}`,
+      `Done this trip: ${doneNames.length ? doneNames.join(', ') : 'none marked'}`,
+      live
+        ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
+        : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('Status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.2 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 
@@ -502,7 +689,7 @@
     $('#refreshBtn').addEventListener('click',refreshLive);
     $('#gpsBtn').addEventListener('click',useGPS);
     $('#copyBtn').addEventListener('click',copyPacket);
-    $('#locationSelect').addEventListener('change',e=>{ state.gps=null; state.settings.location=e.target.value; $('#gpsBtn').textContent='Use my location'; save(); renderAll(); });
+    $('#locationSelect').addEventListener('change',e=>{ state.gps=null; state.gpsAccuracy=null; state.settings.location=e.target.value; state.settings.locationSource='manual'; $('#gpsBtn').textContent='Use my location'; save(); renderAll(); });
     $('#modeSelect').addEventListener('change',e=>{state.settings.mode=e.target.value;save();renderAll();});
     $('#singleRiderToggle').addEventListener('change',e=>{state.settings.singleRider=e.target.checked;save();renderAll();});
     $('#softPlansToggle').addEventListener('change',e=>{state.settings.softPlans=e.target.checked;save();renderAll();});

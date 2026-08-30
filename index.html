@@ -10,18 +10,23 @@
   <title>DLP Dispatcher</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=0.2.0" />
 </head>
 <body>
   <header class="topbar">
     <div>
-      <div class="eyebrow">30 Oct to 2 Nov 2026</div>
+      <div class="eyebrow">30 Oct to 2 Nov 2026 · v0.2</div>
       <h1>DLP Dispatcher</h1>
     </div>
     <div class="status-pill" id="liveStatus"><span class="dot"></span><span>Connecting</span></div>
   </header>
 
   <main>
+    <section class="session-banner test" id="sessionBanner">
+      <div class="session-badge" id="sessionMode">TEST MODE</div>
+      <div id="sessionDetail">No in-resort GPS fix. Recommendations are a simulation using the selected test area.</div>
+    </section>
+
     <section class="hero card">
       <div class="hero-top">
         <div>
@@ -72,6 +77,7 @@
       <div id="recommendations" class="recommendations">
         <div class="card loading">Pulling live waits...</div>
       </div>
+      <div class="feed-health" id="feedHealth">Cross-check not available yet.</div>
     </section>
 
     <section class="card preview-card">
@@ -148,6 +154,6 @@
   </footer>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js"></script>
+  <script src="app.js?v=0.2.0"></script>
 </body>
 </html>

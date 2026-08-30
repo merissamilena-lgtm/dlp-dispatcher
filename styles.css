@@ -107,3 +107,15 @@ footer { width: min(880px,100%); margin: 0 auto; padding: 0 16px calc(28px + env
   .ride-row { grid-template-columns: minmax(0,1fr); }
   .ride-actions { justify-content: space-between; }
 }
+
+/* v0.2 session and confidence indicators */
+.session-banner { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 15px; padding: 11px 13px; margin-bottom: 14px; font-size: 12px; line-height: 1.4; }
+.session-banner.test { background: rgba(243,201,105,.08); border-color: rgba(243,201,105,.38); color: #e9d9a8; }
+.session-banner.live { background: rgba(101,211,154,.08); border-color: rgba(101,211,154,.38); color: #b8ead0; }
+.session-badge { flex: 0 0 auto; border: 1px solid currentColor; border-radius: 999px; padding: 4px 7px; font-size: 10px; font-weight: 950; letter-spacing: .08em; }
+.status-pill.warn .dot { background: var(--warn); }
+.tag.category { color: #c9d6ff; border-color: rgba(122,162,255,.38); }
+.feed-health { color: var(--muted); font-size: 11px; line-height: 1.45; margin: 10px 2px 2px; }
+@media (max-width: 520px) {
+  .session-banner { align-items: flex-start; }
+}
