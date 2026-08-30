@@ -1,17 +1,1 @@
-{
-  "name": "DLP Dispatcher",
-  "short_name": "DLP Dispatch",
-  "description": "Live Disneyland Paris queue deconfliction around fixed bookings, with park-aware recommendations and actionable ride cards.",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#090b12",
-  "theme_color": "#101425",
-  "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
-}
+{"name":"DLP Dispatcher","short_name":"DLP Dispatch","description":"Live Disneyland Paris queue deconfliction with freshness gating and realistic attraction timing.","start_url":"./","display":"standalone","background_color":"#090b12","theme_color":"#101425","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}

@@ -10,151 +10,32 @@
   <title>DLP Dispatcher</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=0.3.0" />
+  <link rel="stylesheet" href="styles.css?v=0.4.0" />
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <div class="eyebrow">30 Oct to 2 Nov 2026 · v0.3</div>
-      <h1>DLP Dispatcher</h1>
-    </div>
+    <div><div class="eyebrow">30 Oct to 2 Nov 2026 · v0.4</div><h1>DLP Dispatcher</h1></div>
     <div class="status-pill" id="liveStatus"><span class="dot"></span><span>Connecting</span></div>
   </header>
-
   <main>
-    <section class="session-banner test" id="sessionBanner">
-      <div class="session-badge" id="sessionMode">TEST MODE</div>
-      <div id="sessionDetail">No in-resort GPS fix. Recommendations are a simulation using the selected test area.</div>
+    <section class="session-banner test" id="sessionBanner"><div class="session-badge" id="sessionMode">TEST MODE</div><div id="sessionDetail">No in-resort GPS fix. Recommendations are a simulation using the selected test area.</div></section>
+    <section class="quick-tools">
+      <details class="preview-quick" id="previewDetails"><summary><span id="previewSummary">Preview: off</span></summary><div class="preview-panel">
+        <label class="preview-enable"><input id="previewToggle" type="checkbox" /> <span>Enable preview clock</span></label>
+        <div class="preview-grid"><label><span>Date</span><select id="previewDate"><option value="2026-10-30">Fri 30 Oct</option><option value="2026-10-31">Sat 31 Oct</option><option value="2026-11-01">Sun 1 Nov</option><option value="2026-11-02">Mon 2 Nov</option></select></label><label><span>Paris time</span><input id="previewTime" type="time" value="17:00" /></label></div>
+        <p class="muted tiny">Uses today's live queues against the selected trip time. It tests routing logic, not October queue predictions.</p>
+      </div></details>
+      <div class="top-updated" id="topUpdated">Waiting for live data</div>
     </section>
-
-    <section class="hero card">
-      <div class="hero-top">
-        <div>
-          <div class="label">NEXT FIXED POINT</div>
-          <div class="commitment-name" id="nextName">No trip commitment active</div>
-          <div class="muted" id="nextMeta">Live queues still work. Use Preview to test trip deconfliction.</div>
-        </div>
-        <div class="countdown" id="countdown">--</div>
-      </div>
-      <div class="safe-line" id="safeLine">Recommendations are not time-blocked outside the trip dates.</div>
-      <div class="button-row">
-        <button class="primary" id="refreshBtn">Refresh live</button>
-        <button id="gpsBtn">Use my location</button>
-        <button id="copyBtn">Copy ChatGPT packet</button>
-      </div>
-    </section>
-
-    <section class="controls card">
-      <div class="control-grid">
-        <label>
-          <span>Current area</span>
-          <select id="locationSelect"></select>
-        </label>
-        <label>
-          <span>Mode</span>
-          <select id="modeSelect">
-            <option value="balanced">Balanced</option>
-            <option value="lowWalk">Low walking</option>
-            <option value="queueHunter">Queue hunter</option>
-            <option value="rain">Rain / indoor bias</option>
-          </select>
-        </label>
-      </div>
-      <div class="toggle-row">
-        <label class="switch-label"><input type="checkbox" id="singleRiderToggle" /> Consider Single Rider</label>
-        <label class="switch-label"><input type="checkbox" id="parkHopToggle" /> Consider the other park</label>
-        <label class="switch-label"><input type="checkbox" id="softPlansToggle" /> Block time for soft plans</label>
-      </div>
-    </section>
-
-    <section>
-      <div class="section-heading">
-        <div>
-          <div class="eyebrow">DECISION ENGINE</div>
-          <h2>Best next moves</h2>
-        </div>
-        <div class="source-age" id="sourceAge">Waiting for data</div>
-      </div>
-      <div id="recommendations" class="recommendations">
-        <div class="card loading">Pulling live waits...</div>
-      </div>
-      <div class="feed-health" id="feedHealth">Cross-check not available yet.</div>
-    </section>
-
-    <section class="card preview-card">
-      <details>
-        <summary>Preview a trip day</summary>
-        <div class="preview-grid">
-          <label><span>Use preview clock</span><input id="previewToggle" type="checkbox" /></label>
-          <label><span>Date</span>
-            <select id="previewDate">
-              <option value="2026-10-30">Fri 30 Oct</option>
-              <option value="2026-10-31">Sat 31 Oct</option>
-              <option value="2026-11-01">Sun 1 Nov</option>
-              <option value="2026-11-02">Mon 2 Nov</option>
-            </select>
-          </label>
-          <label><span>Paris time</span><input id="previewTime" type="time" value="17:00" /></label>
-        </div>
-        <p class="muted small">Preview uses today's live queues against your selected trip time, so it is for testing the logic rather than predicting October waits.</p>
-      </details>
-    </section>
-
-    <section>
-      <div class="section-heading">
-        <div>
-          <div class="eyebrow">LIVE BOARD</div>
-          <h2>All waits</h2>
-        </div>
-        <input class="search" id="searchInput" type="search" placeholder="Search rides" />
-      </div>
-      <div class="filter-row">
-        <button class="filter active" data-filter="all">All</button>
-        <button class="filter" data-filter="Disneyland Park">Disneyland Park</button>
-        <button class="filter" data-filter="Disney Adventure World">Adventure World</button>
-        <button class="filter" data-filter="done">Done</button>
-      </div>
-      <div id="waitBoard" class="wait-board"></div>
-    </section>
-
-    <section class="card">
-      <div class="section-heading compact">
-        <div>
-          <div class="eyebrow">ANCHORS</div>
-          <h2>Your schedule</h2>
-        </div>
-      </div>
-      <div id="scheduleList" class="schedule-list"></div>
-      <p class="muted small">Meal target arrival is 15 minutes early. Train target arrival is 35 minutes early. These can be changed in Settings.</p>
-    </section>
-
-    <section class="card">
-      <details>
-        <summary>Settings and trip tuning</summary>
-        <div class="settings-grid">
-          <label><span>Meal arrival buffer</span><input id="mealBuffer" type="number" min="0" max="45" step="5" value="15" /><small>minutes</small></label>
-          <label><span>Train arrival buffer</span><input id="trainBuffer" type="number" min="10" max="90" step="5" value="35" /><small>minutes</small></label>
-          <label><span>Walking speed</span><input id="walkSpeed" type="number" min="35" max="90" step="5" value="55" /><small>metres/min</small></label>
-          <label><span>Route fudge factor</span><input id="routeFactor" type="number" min="1" max="2" step="0.05" value="1.25" /><small>straight-line multiplier</small></label>
-        </div>
-        <div class="button-row">
-          <button id="resetProgress">Reset DONE marks</button>
-          <button id="resetPriorities">Reset priorities</button>
-        </div>
-      </details>
-    </section>
-
-    <section class="card note-card">
-      <strong>Operating rule:</strong> never risk a fixed booking for one more ride. The engine estimates walking, queueing, ride time and onward travel, then rejects anything that does not fit with the selected buffer.
-    </section>
+    <section class="hero card"><div class="hero-top"><div><div class="label">NEXT FIXED POINT</div><div class="commitment-name" id="nextName">No trip commitment active</div><div class="muted" id="nextMeta">Live queues still work. Use Preview to test trip deconfliction.</div></div><div class="countdown" id="countdown">--</div></div><div class="safe-line" id="safeLine">Recommendations are not time-blocked outside the trip dates.</div><div class="button-row"><button class="primary" id="refreshBtn">Refresh live</button><button id="gpsBtn">Use my location</button><button id="copyBtn">Copy ChatGPT packet</button></div></section>
+    <section class="controls card"><div class="control-grid"><label><span>Current area</span><select id="locationSelect"></select></label><label><span>Mode</span><select id="modeSelect"><option value="balanced">Balanced</option><option value="lowWalk">Low walking</option><option value="queueHunter">Queue hunter</option><option value="rain">Rain / indoor bias</option></select></label></div><div class="toggle-row"><label class="switch-label"><input type="checkbox" id="singleRiderToggle" /> Consider Single Rider</label><label class="switch-label"><input type="checkbox" id="parkHopToggle" /> Consider the other park</label><label class="switch-label"><input type="checkbox" id="softPlansToggle" /> Block time for soft plans</label></div></section>
+    <section><div class="section-heading"><div><div class="eyebrow">DECISION ENGINE</div><h2>Best next moves</h2></div><div class="source-age" id="sourceAge">Waiting for data</div></div><div id="recommendations" class="recommendations"><div class="card loading">Pulling live waits...</div></div><div class="hop-note" id="parkHopNote" hidden></div><div class="feed-health" id="feedHealth">Cross-check not available yet.</div></section>
+    <section><div class="section-heading"><div><div class="eyebrow">LIVE BOARD</div><h2>All waits</h2></div><input class="search" id="searchInput" type="search" placeholder="Search attractions" /></div><div class="filter-row"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="Disneyland Park">Disneyland Park</button><button class="filter" data-filter="Disney Adventure World">Adventure World</button><button class="filter" data-filter="done">Done</button></div><div id="waitBoard" class="wait-board"></div></section>
+    <section class="card"><div class="section-heading compact"><div><div class="eyebrow">ANCHORS</div><h2>Your schedule</h2></div></div><div id="scheduleList" class="schedule-list"></div><p class="muted small">Meal target arrival is 15 minutes early. Train target arrival is 35 minutes early. These can be changed in Settings.</p></section>
+    <section class="card"><details><summary>Settings and trip tuning</summary><div class="settings-grid"><label><span>Meal arrival buffer</span><input id="mealBuffer" type="number" min="0" max="45" step="5" value="15" /><small>minutes</small></label><label><span>Train arrival buffer</span><input id="trainBuffer" type="number" min="10" max="90" step="5" value="35" /><small>minutes</small></label><label><span>Walking speed</span><input id="walkSpeed" type="number" min="35" max="90" step="5" value="55" /><small>metres/min</small></label><label><span>Route fudge factor</span><input id="routeFactor" type="number" min="1" max="2" step="0.05" value="1.25" /><small>straight-line multiplier</small></label></div><div class="button-row"><button id="resetProgress">Reset DONE marks</button><button id="resetPriorities">Reset priorities</button></div></details></section>
+    <section class="card note-card"><strong>Operating rule:</strong> never risk a fixed booking for one more attraction. The engine estimates walking, queueing, realistic experience time and onward travel, then rejects anything that does not fit with the selected buffer.</section>
   </main>
-
-  <footer>
-    <div>Independent trip tool, not affiliated with Disney.</div>
-    <div>Live data: <a href="https://themeparks.wiki/" target="_blank" rel="noreferrer">ThemeParks.wiki</a> · fallback: <a href="https://queue-times.com/" target="_blank" rel="noreferrer">Powered by Queue-Times.com</a></div>
-  </footer>
-
+  <footer><div>Independent trip tool, not affiliated with Disney.</div><div>Primary live data: <a href="https://themeparks.wiki/" target="_blank" rel="noreferrer">ThemeParks.wiki</a>. Queue-Times is used as a secondary cross-check only when the browser permits it.</div></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastUndo" type="button" hidden>Undo</button></div>
-  <script src="app.js?v=0.3.0"></script>
-</body>
-</html>
+  <script src="app.js?v=0.4.0"></script>
+</body></html>
