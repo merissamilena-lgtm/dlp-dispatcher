@@ -108,7 +108,7 @@ footer { width: min(880px,100%); margin: 0 auto; padding: 0 16px calc(28px + env
   .ride-actions { justify-content: space-between; }
 }
 
-/* v0.2 session and confidence indicators */
+/* v0.2 session and confidence indicators, retained in v0.3 */
 .session-banner { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 15px; padding: 11px 13px; margin-bottom: 14px; font-size: 12px; line-height: 1.4; }
 .session-banner.test { background: rgba(243,201,105,.08); border-color: rgba(243,201,105,.38); color: #e9d9a8; }
 .session-banner.live { background: rgba(101,211,154,.08); border-color: rgba(101,211,154,.38); color: #b8ead0; }
@@ -118,4 +118,42 @@ footer { width: min(880px,100%); margin: 0 auto; padding: 0 16px calc(28px + env
 .feed-health { color: var(--muted); font-size: 11px; line-height: 1.45; margin: 10px 2px 2px; }
 @media (max-width: 520px) {
   .session-banner { align-items: flex-start; }
+}
+
+/* v0.3 recommendation actions, richer live board and park-aware routing */
+.reco { cursor: pointer; }
+.ride-link { appearance: none; border: 0; background: transparent; color: var(--text); padding: 0 34px 0 0; text-align: left; font-size: 18px; line-height: 1.25; font-weight: 900; border-radius: 0; }
+.ride-link:active { transform: none; opacity: .82; }
+.reco-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--line); }
+.reco-actions button { flex: 1; padding: 9px 10px; font-size: 11px; border-radius: 10px; }
+.reco-actions .done-btn { color: var(--good); border-color: rgba(101,211,154,.45); }
+.not-now-btn { color: var(--muted); }
+
+.railroad-strip { background: rgba(19,24,39,.9); border: 1px solid var(--line); border-radius: 15px; padding: 12px; margin-bottom: 8px; }
+.railroad-title { font-size: 12px; font-weight: 900; margin-bottom: 8px; color: #c9d6ff; }
+.railroad-stations { display: flex; gap: 6px; flex-wrap: wrap; }
+.rail-station { border: 1px solid var(--line); border-radius: 999px; padding: 5px 8px; color: var(--muted); font-size: 10px; }
+.rail-station.open { border-color: rgba(101,211,154,.35); color: #b8ead0; }
+.rail-station.closed { border-color: rgba(255,127,136,.32); color: #ffb2b8; }
+
+.ride-info { min-width: 0; }
+.ride-title-line { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+.ride-title { flex: 1 1 220px; }
+.status-chip { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 999px; padding: 4px 7px; font-size: 9px; font-weight: 900; color: var(--muted); }
+.status-chip.open { color: #c9d6ff; border-color: rgba(122,162,255,.34); }
+.status-chip.good { color: var(--good); border-color: rgba(101,211,154,.4); }
+.status-chip.warn { color: var(--warn); border-color: rgba(243,201,105,.4); }
+.status-chip.closed { color: var(--bad); border-color: rgba(255,127,136,.4); }
+.ride-row.flash { animation: rowFlash 1.5s ease; }
+@keyframes rowFlash { 0%,100% { box-shadow: none; } 25%,65% { box-shadow: 0 0 0 2px rgba(122,162,255,.65), 0 0 28px rgba(122,162,255,.18); } }
+
+.toast { display: flex; align-items: center; gap: 10px; pointer-events: none; }
+.toast.show { pointer-events: auto; }
+#toastUndo { border: 0; border-left: 1px solid rgba(11,16,32,.22); background: transparent; color: #0b1020; padding: 2px 0 2px 10px; border-radius: 0; font-size: 12px; font-weight: 950; }
+#toastUndo:active { transform: none; opacity: .7; }
+
+@media (max-width: 520px) {
+  .ride-title-line { display: grid; grid-template-columns: minmax(0,1fr); gap: 6px; }
+  .status-chip { width: fit-content; }
+  .ride-sub { line-height: 1.5; }
 }

@@ -10,12 +10,12 @@
   <title>DLP Dispatcher</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=0.2.0" />
+  <link rel="stylesheet" href="styles.css?v=0.3.0" />
 </head>
 <body>
   <header class="topbar">
     <div>
-      <div class="eyebrow">30 Oct to 2 Nov 2026 · v0.2</div>
+      <div class="eyebrow">30 Oct to 2 Nov 2026 · v0.3</div>
       <h1>DLP Dispatcher</h1>
     </div>
     <div class="status-pill" id="liveStatus"><span class="dot"></span><span>Connecting</span></div>
@@ -62,6 +62,7 @@
       </div>
       <div class="toggle-row">
         <label class="switch-label"><input type="checkbox" id="singleRiderToggle" /> Consider Single Rider</label>
+        <label class="switch-label"><input type="checkbox" id="parkHopToggle" /> Consider the other park</label>
         <label class="switch-label"><input type="checkbox" id="softPlansToggle" /> Block time for soft plans</label>
       </div>
     </section>
@@ -153,7 +154,7 @@
     <div>Live data: <a href="https://themeparks.wiki/" target="_blank" rel="noreferrer">ThemeParks.wiki</a> · fallback: <a href="https://queue-times.com/" target="_blank" rel="noreferrer">Powered by Queue-Times.com</a></div>
   </footer>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=0.2.0"></script>
+  <div id="toast" class="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastUndo" type="button" hidden>Undo</button></div>
+  <script src="app.js?v=0.3.0"></script>
 </body>
 </html>

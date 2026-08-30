@@ -11,6 +11,9 @@
   const DLP_GEOFENCE_METRES = 5000;
   const FEED_AGING_MIN = 10;
   const FEED_STALE_MIN = 20;
+  const PARK_HOP_TIME_MIN = 15;
+  const PARK_HOP_SCORE_PENALTY = 30;
+  const NOT_NOW_MIN = 30;
 
   const AREAS = {
     'Disneyland Park entrance': { lat: 48.87070, lon: 2.77972, park: 'Disneyland Park' },
@@ -47,6 +50,11 @@
   ];
 
   const META = [
+    { p: 'disneyland railroad main street station', area: 'Main Street U.S.A.', duration: 20, indoor: false },
+    { p: 'disneyland railroad frontierland depot', area: 'Frontierland', duration: 20, indoor: false },
+    { p: 'disneyland railroad fantasyland station', area: 'Fantasyland', duration: 20, indoor: false },
+    { p: 'disneyland railroad discoveryland station', area: 'Discoveryland', duration: 20, indoor: false },
+    { p: 'thunder mesa riverboat landing', area: 'Frontierland', duration: 15, indoor: false },
     { p: 'big thunder', area: 'Frontierland', duration: 5, indoor: false },
     { p: 'phantom manor', area: 'Frontierland', duration: 8, indoor: true },
     { p: 'pirates of the caribbean', area: 'Adventureland', duration: 10, indoor: true },
@@ -82,6 +90,8 @@
   ];
 
   const EXPERIENCE_RULES = [
+    { p: 'thunder mesa riverboat landing', category: 'scenic', label: 'Scenic ride', bonus: -2 },
+    { p: 'le pays des contes de fees', category: 'scenic', label: 'Scenic ride', bonus: 0 },
     { p: 'disneyland railroad', category: 'transport', label: 'Transport', bonus: -34 },
     { p: 'horse drawn streetcars', category: 'transport', label: 'Transport', bonus: -34 },
     { p: 'main street vehicles', category: 'transport', label: 'Transport', bonus: -34 },
@@ -118,14 +128,16 @@
     secondarySource: null,
     secondaryUpdated: null,
     feedDisagreements: [],
+    secondaryError: null,
     gps: null,
     gpsAccuracy: null,
     activeFilter: 'all',
     search: '',
     priorities: loadJSON('dlpPriorities', {}),
     done: loadJSON('dlpDone', {}),
+    notNow: loadJSON('dlpNotNow', {}),
     settings: Object.assign({
-      mode: 'balanced', singleRider: false, softPlans: false,
+      mode: 'balanced', singleRider: false, parkHop: false, softPlans: false,
       mealBuffer: 15, trainBuffer: 35, walkSpeed: 55, routeFactor: 1.25,
       preview: false, previewDate: '2026-10-30', previewTime: '17:00', location: 'Disneyland Park entrance', locationSource: 'default'
     }, loadJSON('dlpSettings', {}))
@@ -140,6 +152,7 @@
   function save() {
     localStorage.setItem('dlpPriorities', JSON.stringify(state.priorities));
     localStorage.setItem('dlpDone', JSON.stringify(state.done));
+    localStorage.setItem('dlpNotNow', JSON.stringify(state.notNow));
     localStorage.setItem('dlpSettings', JSON.stringify(state.settings));
   }
 
@@ -178,9 +191,17 @@
     if (d == null) return 7;
     return Math.max(1, Math.ceil((d * Number(state.settings.routeFactor)) / Number(state.settings.walkSpeed)));
   }
-  function parkHopPenalty(fromPark, toPark) {
-    return fromPark && toPark && fromPark !== toPark && fromPark !== 'station' && toPark !== 'station' ? 8 : 0;
+  function isThemePark(park) { return park === 'Disneyland Park' || park === 'Disney Adventure World'; }
+  function isParkHop(fromPark, toPark) { return isThemePark(fromPark) && isThemePark(toPark) && fromPark !== toPark; }
+  function parkHopPenalty(fromPark, toPark) { return isParkHop(fromPark, toPark) ? PARK_HOP_TIME_MIN : 0; }
+  function deferredUntil(k) { return Number(state.notNow[k] || 0); }
+  function isDeferred(k) {
+    const until = deferredUntil(k);
+    if (!until) return false;
+    if (until <= Date.now()) { delete state.notNow[k]; save(); return false; }
+    return true;
   }
+  function rideRowId(k) { return `ride-${k.replace(/[^a-z0-9]+/g,'-')}`; }
   function pointForRide(ride) {
     if (Number.isFinite(ride.lat) && Number.isFinite(ride.lon)) return { lat: ride.lat, lon: ride.lon, park: ride.park };
     const m = metaFor(ride.name);
@@ -326,8 +347,10 @@
       delete r.feedDisagreement;
       delete r.secondaryWait;
       delete r.secondaryStatus;
+      delete r.crossChecked;
       const other = secondaryMap.get(keyFor(r.name));
       if (!other) continue;
+      r.crossChecked = true;
       r.secondaryWait = other.wait;
       r.secondaryStatus = other.status;
       const pOpen = r.status === 'OPERATING';
@@ -350,6 +373,7 @@
       const [tpwResult, qtResult] = await Promise.allSettled([fetchThemeParks(), fetchQueueTimes()]);
       const tpw = tpwResult.status === 'fulfilled' ? tpwResult.value : null;
       const qt = qtResult.status === 'fulfilled' ? qtResult.value : null;
+      state.secondaryError = tpw && !qt ? `Queue-Times: ${qtResult.reason?.message || 'browser fetch failed'}` : (!tpw && qt ? `ThemeParks.wiki: ${tpwResult.reason?.message || 'fetch failed'}` : null);
       if (!tpw && !qt) throw new Error('Both live feeds failed');
 
       const primary = tpw || qt;
@@ -393,10 +417,13 @@
     if (ride.status !== 'OPERATING' || ride.wait == null) return null;
     if (ride.feedDisagreement?.kind === 'status') return null;
     const k = keyFor(ride.name);
-    if (state.priorities[k] === 'skip') return null;
+    if (state.priorities[k] === 'skip' || state.done[k] || isDeferred(k)) return null;
     const meta = metaFor(ride.name);
+    const fromPark = currentPark();
+    const parkHop = isParkHop(fromPark, ride.park);
+    if (parkHop && !state.settings.parkHop) return null;
     const from = currentPoint(), to = pointForRide(ride);
-    let walkTo = walkMinutes(from,to) + parkHopPenalty(currentPark(),ride.park);
+    let walkTo = walkMinutes(from,to) + parkHopPenalty(fromPark,ride.park);
     let chosenWait = ride.wait, queueLabel = 'Standby';
     if (state.settings.singleRider && Number.isFinite(ride.singleRiderWait) && ride.singleRiderWait < chosenWait) {
       chosenWait = ride.singleRiderWait; queueLabel = 'Single Rider';
@@ -425,13 +452,14 @@
     score += opportunity;
 
     if (['ride','headline'].includes(meta.category)) score += Math.max(-8,(30-Math.min(chosenWait,60))*.22);
+    else if (meta.category === 'scenic') score += Math.max(-5,(20-Math.min(chosenWait,45))*.10);
     else if (chosenWait === 0) score -= 8;
+    if (parkHop) score -= PARK_HOP_SCORE_PENALTY;
 
     const distWeight = state.settings.mode === 'lowWalk' ? 2.4 : 1.15;
     score -= walkTo * distWeight;
     if (state.settings.mode === 'queueHunter') score += opportunity*.45;
     if (state.settings.mode === 'rain') score += meta.indoor ? 12 : -25;
-    if (state.done[k]) score -= 45;
     if (ride.feedDisagreement?.kind === 'wait') score -= 12;
     const freshness = feedFreshness();
     if (freshness.level === 'aging') score -= 5;
@@ -442,7 +470,7 @@
       if (slack < 10) score -= 9;
     }
     const finish = new Date(now.getTime() + (walkTo+chosenWait+rideDuration)*60000);
-    return { ride, score, walkTo, walkOnward, chosenWait, queueLabel, rideDuration, avg, opportunity, priority, finish, meta, minutesToTarget, target };
+    return { ride, score, walkTo, walkOnward, chosenWait, queueLabel, rideDuration, avg, opportunity, priority, finish, meta, minutesToTarget, target, parkHop };
   }
 
   function recommendationReason(x) {
@@ -453,6 +481,8 @@
     if (x.walkTo <= 4) bits.push('very close');
     else if (x.walkTo <= 8) bits.push('nearby');
     if (x.meta.category === 'headline') bits.push('headline ride');
+    if (x.meta.category === 'scenic') bits.push('scenic attraction');
+    if (x.parkHop) bits.push('requires park hop');
     if (x.ride.feedDisagreement?.kind === 'wait') bits.push('feeds disagree on wait');
     return bits.length ? bits.join(', ') : 'solid fit for the current rules';
   }
@@ -513,25 +543,77 @@
     if (!state.rides.length) { box.innerHTML = '<div class="card loading">No live ride data yet.</div>'; return; }
     if (!recs.length) { box.innerHTML = '<div class="card empty">Nothing operating safely fits the current rules. Head toward the next anchor or relax the filters.</div>'; return; }
     box.innerHTML = recs.map((x,i)=>{
+      const k = keyFor(x.ride.name);
       const opp = x.avg == null ? null : x.avg-x.chosenWait;
       const oppText = opp == null ? 'no historical baseline' : opp >= 10 ? `${opp}m below 2026 avg` : opp <= -10 ? `${Math.abs(opp)}m above 2026 avg` : 'near usual wait';
       const onward = x.target ? ` · ${x.walkOnward}m onward walk` : '';
       const priorityTag = x.priority === 'must' ? '<span class="tag good">MUST</span>' : x.priority === 'want' ? '<span class="tag">WANT</span>' : '';
       const disagreeTag = x.ride.feedDisagreement?.kind === 'wait' ? '<span class="tag warn">FEEDS DISAGREE</span>' : '';
-      return `<article class="card reco">
+      const hopTag = x.parkHop ? '<span class="tag warn">PARK HOP</span>' : '';
+      return `<article class="card reco" data-card-jump="${esc(k)}">
         <div class="rank">${i+1}</div>
-        <div class="ride-name">${esc(x.ride.name)}</div>
+        <button class="ride-link" data-jump="${esc(k)}">${esc(x.ride.name)}</button>
         <div class="muted small">${esc(x.ride.park)} · ${esc(x.meta.area || 'area unknown')}</div>
         <div class="big-wait">${x.chosenWait}<span> min ${x.queueLabel}</span></div>
-        <div class="tags"><span class="tag category">${esc(x.meta.label)}</span><span class="tag ${opp!=null&&opp>=10?'good':opp!=null&&opp<=-10?'warn':''}">${oppText}</span><span class="tag">${x.walkTo}m walk</span>${priorityTag}${disagreeTag}</div>
+        <div class="tags"><span class="tag category">${esc(x.meta.label)}</span><span class="tag ${opp!=null&&opp>=10?'good':opp!=null&&opp<=-10?'warn':''}">${oppText}</span><span class="tag">${x.walkTo}m walk</span>${priorityTag}${disagreeTag}${hopTag}</div>
         <div class="why"><strong>Why:</strong> ${esc(recommendationReason(x))}. Estimated off ride about <strong>${parisTime(x.finish)}</strong>${onward}.</div>
+        <div class="reco-actions"><button class="done-btn" data-reco-done="${esc(k)}">DONE</button><button class="not-now-btn" data-reco-notnow="${esc(k)}">Not now</button></div>
       </article>`;
     }).join('');
+
+    $$('[data-reco-done]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation(); markDoneWithUndo(b.dataset.recoDone);}));
+    $$('[data-reco-notnow]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation(); deferRide(b.dataset.recoNotnow);}));
+    $$('[data-jump]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation(); jumpToRide(b.dataset.jump);}));
+    $$('[data-card-jump]').forEach(card=>card.addEventListener('click',()=>jumpToRide(card.dataset.cardJump)));
+  }
+
+  function rideAgeLabel(r) {
+    if (!r.lastUpdated) return 'update time unknown';
+    const d = new Date(r.lastUpdated);
+    if (isNaN(d)) return 'update time unknown';
+    const mins = Math.max(0, Math.floor((Date.now()-d.getTime())/60000));
+    return mins < 1 ? 'updated just now' : `updated ${mins}m ago`;
+  }
+
+  function waitValueFor(r, m) {
+    if (r.status !== 'OPERATING') return { text: prettyStatus(r.status), cls: 'closed' };
+    if (r.wait == null) return { text: 'OPEN · wait unavailable', cls: 'open' };
+    const avg = baselineFor(r.name);
+    if (avg == null || !['ride','headline','scenic'].includes(m.category)) return { text: `${r.wait} min`, cls: 'open' };
+    const delta = avg-r.wait;
+    if (delta >= 10) return { text: `${r.wait} min · ${delta}m below 2026 avg`, cls: 'good' };
+    if (delta <= -10) return { text: `${r.wait} min · ${Math.abs(delta)}m above 2026 avg`, cls: 'warn' };
+    return { text: `${r.wait} min · near 2026 avg`, cls: 'open' };
+  }
+
+  function railroadSummary() {
+    const stations = [
+      ['Main Street','disneyland railroad main street station'],
+      ['Frontierland','disneyland railroad frontierland depot'],
+      ['Fantasyland','disneyland railroad fantasyland station'],
+      ['Discoveryland','disneyland railroad discoveryland station']
+    ];
+    const found = stations.map(([label,pat])=>[label,state.rides.find(r=>norm(r.name).includes(pat))]).filter(x=>x[1]);
+    if (!found.length) return '';
+    const cells = found.map(([label,r])=>{
+      const val = r.status === 'OPERATING' ? (r.wait == null ? 'OPEN' : `${r.wait}m`) : 'CLOSED';
+      const cls = r.status === 'OPERATING' ? 'open' : 'closed';
+      return `<span class="rail-station ${cls}"><strong>${label}</strong> ${val}</span>`;
+    }).join('');
+    return `<div class="railroad-strip"><div class="railroad-title">Disneyland Railroad stations</div><div class="railroad-stations">${cells}</div></div>`;
   }
 
   function renderWaitBoard() {
     const q = norm(state.search);
-    let rides = [...state.rides].sort((a,b)=>(a.wait ?? 999)-(b.wait ?? 999));
+    let rides = [...state.rides].sort((a,b)=>{
+      const cp = currentPark();
+      if (a.park !== b.park) {
+        if (a.park === cp) return -1;
+        if (b.park === cp) return 1;
+        return a.park.localeCompare(b.park);
+      }
+      return (a.wait ?? 999)-(b.wait ?? 999);
+    });
     rides = rides.filter(r => {
       const k = keyFor(r.name);
       if (q && !norm(r.name).includes(q)) return false;
@@ -539,24 +621,29 @@
       if (state.activeFilter !== 'all' && r.park !== state.activeFilter) return false;
       return true;
     });
-    $('#waitBoard').innerHTML = rides.length ? rides.map(r=>{
+    const showRail = !q && (state.activeFilter === 'all' || state.activeFilter === 'Disneyland Park');
+    const rows = rides.length ? rides.map(r=>{
       const k = keyFor(r.name), pri = state.priorities[k] || 'neutral', done = !!state.done[k];
       const m = metaFor(r.name);
-      const status = r.status === 'OPERATING' ? (r.wait == null ? 'Open' : `${r.wait} min`) : prettyStatus(r.status);
-      const sr = Number.isFinite(r.singleRiderWait) ? ` · Single Rider ${r.singleRiderWait}m` : '';
-      const disagreement = r.feedDisagreement ? ` · ⚠ ${r.feedDisagreement.kind === 'status' ? 'feeds disagree on status' : `other feed ${r.secondaryWait}m`}` : '';
-      return `<div class="ride-row ${done?'done':''}">
-        <div><div class="ride-title">${esc(r.name)}</div><div class="ride-sub">${esc(r.park)}${m.area?` · ${esc(m.area)}`:''} · ${esc(m.label)}${sr}${disagreement}</div></div>
+      const value = waitValueFor(r,m);
+      const sr = Number.isFinite(r.singleRiderWait) ? `Single Rider ${r.singleRiderWait}m` : null;
+      const confidence = r.feedDisagreement ? (r.feedDisagreement.kind === 'status' ? '⚠ feeds disagree on status' : `⚠ other feed ${r.secondaryWait}m`) : r.crossChecked ? 'cross-checked' : `${state.source || 'live source'} only`;
+      const avg = baselineFor(r.name);
+      const typical = avg != null && ['ride','headline','scenic'].includes(m.category) ? `2026 avg ${avg}m` : null;
+      const details = [r.park, m.area, m.label, typical, sr, confidence, rideAgeLabel(r)].filter(Boolean).map(esc).join(' · ');
+      return `<div class="ride-row ${done?'done':''}" id="${rideRowId(k)}">
+        <div class="ride-info"><div class="ride-title-line"><div class="ride-title">${esc(r.name)}</div><span class="status-chip ${value.cls}">${esc(value.text)}</span></div><div class="ride-sub">${details}</div></div>
         <div class="ride-actions">
           <button class="priority-btn ${pri}" data-priority="${esc(k)}">${priorityLabel(pri)}</button>
           <button class="done-btn ${done?'on':''}" data-done="${esc(k)}">${done?'DONE':'Mark done'}</button>
-          <div class="wait-num">${r.status==='OPERATING' && r.wait!=null ? r.wait : '·'}<small>${status}</small></div>
+          <div class="wait-num">${r.status==='OPERATING' && r.wait!=null ? r.wait : '·'}<small>${r.status==='OPERATING'?'STANDBY':prettyStatus(r.status)}</small></div>
         </div>
       </div>`;
     }).join('') : '<div class="empty">No rides match this view.</div>';
+    $('#waitBoard').innerHTML = `${showRail ? railroadSummary() : ''}${rows}`;
 
     $$('[data-priority]').forEach(b=>b.addEventListener('click',()=>cyclePriority(b.dataset.priority)));
-    $$('[data-done]').forEach(b=>b.addEventListener('click',()=>toggleDone(b.dataset.done)));
+    $$('[data-done]').forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.done; if (state.done[k]) toggleDone(k); else markDoneWithUndo(k); }));
   }
 
   function renderSchedule() {
@@ -579,11 +666,11 @@
       const count = state.feedDisagreements.length;
       $('#feedHealth').textContent = count ? `${state.secondarySource} cross-check: ${count} disagreement${count===1?'':'s'}. Status conflicts are excluded from recommendations.` : `${state.secondarySource} cross-check: no material disagreements.`;
     } else {
-      $('#feedHealth').textContent = 'Only one live source is reachable. Treat recommendations with a little more caution.';
+      $('#feedHealth').textContent = `Only one live source is reachable${state.secondaryError ? ` (${state.secondaryError})` : ''}. Treat recommendations with a little more caution.`;
     }
   }
 
-  function prettyStatus(s='UNKNOWN') { return s.toLowerCase().replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase()); }
+  function prettyStatus(s='UNKNOWN') { return String(s || 'UNKNOWN').toLowerCase().replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase()); }
   function priorityLabel(p) { return {neutral:'Priority',want:'WANT',must:'MUST',skip:'SKIP'}[p] || 'Priority'; }
   function cyclePriority(k) {
     const order = ['neutral','want','must','skip'];
@@ -593,13 +680,38 @@
     save(); renderAll();
   }
   function toggleDone(k) { state.done[k] = !state.done[k]; if (!state.done[k]) delete state.done[k]; save(); renderAll(); }
+  function markDoneWithUndo(k) {
+    const wasDone = !!state.done[k];
+    state.done[k] = true; save(); renderAll();
+    showUndoToast('Marked DONE', () => { if (!wasDone) delete state.done[k]; save(); renderAll(); });
+  }
+  function deferRide(k) {
+    const previous = state.notNow[k];
+    state.notNow[k] = Date.now() + NOT_NOW_MIN*60000; save(); renderAll();
+    showUndoToast(`Hidden for ${NOT_NOW_MIN} minutes`, () => { if (previous) state.notNow[k]=previous; else delete state.notNow[k]; save(); renderAll(); });
+  }
+  function jumpToRide(k) {
+    state.activeFilter = 'all'; state.search = ''; $('#searchInput').value = '';
+    $$('.filter').forEach(x=>x.classList.toggle('active',x.dataset.filter==='all'));
+    renderWaitBoard();
+    requestAnimationFrame(()=>{ const row=document.getElementById(rideRowId(k)); if (row) { row.scrollIntoView({behavior:'smooth',block:'center'}); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1600); } });
+  }
   function esc(s='') { return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function setStatus(kind,text) { const e=$('#liveStatus'); e.className=`status-pill ${kind==='ok'?'ok':kind==='bad'?'bad':kind==='warn'?'warn':''}`; e.querySelector('span:last-child').textContent=text; }
-  function toast(msg) { const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),2200); }
+  function toast(msg) {
+    const t=$('#toast'), text=$('#toastText'), undo=$('#toastUndo');
+    text.textContent=msg; undo.hidden=true; undo.onclick=null; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),2400);
+  }
+  function showUndoToast(msg, fn) {
+    const t=$('#toast'), text=$('#toastText'), undo=$('#toastUndo');
+    text.textContent=msg; undo.hidden=false; undo.onclick=()=>{ clearTimeout(toast.t); t.classList.remove('show'); fn(); };
+    t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>{t.classList.remove('show'); undo.hidden=true;},4200);
+  }
 
   function syncControls() {
     $('#modeSelect').value = state.settings.mode;
     $('#singleRiderToggle').checked = !!state.settings.singleRider;
+    $('#parkHopToggle').checked = !!state.settings.parkHop;
     $('#softPlansToggle').checked = !!state.settings.softPlans;
     $('#previewToggle').checked = !!state.settings.preview;
     $('#previewDate').value = state.settings.previewDate;
@@ -664,24 +776,26 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.2',
+      'DLP DISPATCHER STATUS v0.3',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
       `Routing location: ${location}`,
       `Location source: ${locationSourceLabel()}`,
-      `Mode: ${state.settings.mode}; Single Rider: ${state.settings.singleRider?'yes':'no'}`,
+      `Mode: ${state.settings.mode}; Single Rider: ${state.settings.singleRider?'yes':'no'}; Park hopping: ${state.settings.parkHop?'consider':'stay in current park'}`,
+      `Current park for routing: ${currentPark() || 'unknown'}`,
       `Primary live source: ${state.source || 'none'}${state.sourceUpdated?`; updated ${state.sourceUpdated.toISOString()}`:''}; freshness ${fresh.level}${fresh.mins==null?'':` (${fresh.mins}m old)`}`,
-      `Secondary cross-check: ${state.secondarySource || 'unavailable'}; material disagreements ${state.feedDisagreements.length}`,
+      `Secondary cross-check: ${state.secondarySource || 'unavailable'}; material disagreements ${state.feedDisagreements.length}${state.secondaryError?`; diagnostic ${state.secondaryError}`:''}`,
       commitmentLine,
       safeMinutesLine,
       `Top engine picks: ${recs.map((x,i)=>`${i+1}) ${x.ride.name} ${x.chosenWait}m ${x.queueLabel}, ${x.walkTo}m walk, ${x.meta.label}; reason: ${recommendationReason(x)}`).join(' | ') || 'none'}`,
       `Done this trip: ${doneNames.length ? doneNames.join(', ') : 'none marked'}`,
+      `Deferred/not now: ${Object.keys(state.notNow).filter(isDeferred).length} attraction(s)`,
       live
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.2 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.3 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 
@@ -692,6 +806,7 @@
     $('#locationSelect').addEventListener('change',e=>{ state.gps=null; state.gpsAccuracy=null; state.settings.location=e.target.value; state.settings.locationSource='manual'; $('#gpsBtn').textContent='Use my location'; save(); renderAll(); });
     $('#modeSelect').addEventListener('change',e=>{state.settings.mode=e.target.value;save();renderAll();});
     $('#singleRiderToggle').addEventListener('change',e=>{state.settings.singleRider=e.target.checked;save();renderAll();});
+    $('#parkHopToggle').addEventListener('change',e=>{state.settings.parkHop=e.target.checked;save();renderAll();});
     $('#softPlansToggle').addEventListener('change',e=>{state.settings.softPlans=e.target.checked;save();renderAll();});
     $('#previewToggle').addEventListener('change',e=>{state.settings.preview=e.target.checked;save();renderAll();});
     $('#previewDate').addEventListener('change',e=>{state.settings.previewDate=e.target.value;save();renderAll();});
