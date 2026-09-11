@@ -1,0 +1,1 @@
+Apply the v0.5.3 hard-anchor safety and TEST diagnostics upgrade.
