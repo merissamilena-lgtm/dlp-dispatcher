@@ -10,11 +10,11 @@
   <title>DLP Dispatcher</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=0.5.3" />
+  <link rel="stylesheet" href="styles.css?v=0.6.0" />
 </head>
 <body>
   <header class="topbar">
-    <div><div class="eyebrow">30 Oct to 2 Nov 2026 · v0.5.3</div><h1>DLP Dispatcher</h1></div>
+    <div><div class="eyebrow">30 Oct to 2 Nov 2026 · v0.6.0</div><h1>DLP Dispatcher</h1></div>
     <div class="status-pill" id="liveStatus"><span class="dot"></span><span>Connecting</span></div>
   </header>
   <main>
@@ -27,8 +27,8 @@
       </div></details>
       <div class="top-updated" id="topUpdated">Waiting for live data</div>
     </section>
-    <section class="hero card"><div class="hero-top"><div><div class="label">NEXT FIXED POINT</div><div class="commitment-name" id="nextName">No trip commitment active</div><div class="muted" id="nextMeta">Live queues still work. Use Preview to test trip deconfliction.</div></div><div class="countdown" id="countdown">--</div></div><div class="safe-line" id="safeLine">Recommendations are not time-blocked outside the trip dates.</div><div class="button-row"><button class="primary" id="refreshBtn">Refresh live</button><button id="gpsBtn">Use my location</button><button id="copyBtn">Copy ChatGPT packet</button></div></section>
-    <section class="controls card"><div class="control-grid"><label><span>Current area</span><select id="locationSelect"></select></label><label><span>Mode</span><select id="modeSelect"><option value="balanced">Balanced</option><option value="lowWalk">Low walking</option><option value="queueHunter">Queue hunter</option><option value="rain">Rain / indoor bias</option></select></label></div><div class="toggle-row"><label class="switch-label"><input type="checkbox" id="singleRiderToggle" /> Consider Single Rider</label><label class="switch-label"><input type="checkbox" id="parkHopToggle" /> Consider the other park</label><label class="switch-label"><input type="checkbox" id="softPlansToggle" /> Block time for soft plans</label></div></section>
+    <section class="hero card"><div class="hero-top"><div><div class="label">NEXT FIXED POINT</div><div class="commitment-name" id="nextName">No trip commitment active</div><div class="muted" id="nextMeta">Live queues still work. Use Preview to test trip deconfliction.</div></div><div class="countdown" id="countdown">--</div></div><div class="urgency-badge" id="urgencyBadge" hidden></div><div class="safe-line" id="safeLine">Recommendations are not time-blocked outside the trip dates.</div><div class="button-row"><button class="primary" id="refreshBtn">Refresh live</button><button id="gpsBtn">Use my location</button><button id="copyBtn">Copy ChatGPT packet</button></div></section>
+    <section class="controls card"><div class="control-grid"><label><span>Current area</span><select id="locationSelect"></select></label><label><span>Mode</span><select id="modeSelect"><option value="balanced">Balanced</option><option value="lowWalk">Low walking</option><option value="queueHunter">Queue hunter</option><option value="rain">Rain / indoor bias</option></select></label></div><div class="toggle-row"><label class="switch-label"><input type="checkbox" id="singleRiderToggle" /> Consider Single Rider</label><label class="switch-label"><input type="checkbox" id="parkHopToggle" /> Consider the other park</label><label class="switch-label"><input type="checkbox" id="softPlansToggle" /> Block time for soft plans</label><label class="switch-label"><input type="checkbox" id="precisionRoutingToggle" checked /> Precision routing (TEST · pushchair)</label></div></section>
     <section><div class="section-heading"><div><div class="eyebrow">DECISION ENGINE</div><h2>Best next moves</h2></div><div class="source-age" id="sourceAge">Waiting for data</div></div><div id="recommendations" class="recommendations"><div class="card loading">Pulling live waits...</div></div><div class="hop-note" id="parkHopNote" hidden></div><div class="feed-health" id="feedHealth">Cross-check not available yet.</div></section>
     <section><div class="section-heading"><div><div class="eyebrow">LIVE BOARD</div><h2>All waits</h2></div><input class="search" id="searchInput" type="search" placeholder="Search attractions" /></div><div class="filter-row"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="Disneyland Park">Disneyland Park</button><button class="filter" data-filter="Disney Adventure World">Adventure World</button><button class="filter" data-filter="done">Done</button></div><div id="waitBoard" class="wait-board"></div></section>
     <section class="card"><div class="section-heading compact"><div><div class="eyebrow">ANCHORS</div><h2>Your schedule</h2></div></div><div id="scheduleList" class="schedule-list"></div><p class="muted small">Meal target arrival is 15 minutes early. Train target arrival is 35 minutes early. These can be changed in Settings.</p></section>
@@ -37,5 +37,5 @@
   </main>
   <footer><div>Independent trip tool, not affiliated with Disney.</div><div>Primary live data: <a href="https://themeparks.wiki/" target="_blank" rel="noreferrer">ThemeParks.wiki</a>. Secondary cross-check: <a href="https://queue-times.com/" target="_blank" rel="noreferrer">Powered by Queue-Times.com</a> via the DLP Dispatcher proxy.</div></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastUndo" type="button" hidden>Undo</button></div>
-  <script src="app.js?v=0.5.3"></script>
+  <script src="app.js?v=0.6.0"></script>
 </body></html>

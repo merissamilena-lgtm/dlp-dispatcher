@@ -159,13 +159,19 @@
     lastFetchedAt: null,
     gps: null,
     gpsAccuracy: null,
+    gpsWatchId: null,
+    gpsLastRenderAt: 0,
+    routingReady: false,
+    routingError: null,
+    routingLocations: null,
+    routingGraph: null,
     activeFilter: 'all',
     search: '',
     priorities: loadJSON('dlpPriorities', {}),
     done: loadJSON('dlpDone', {}),
     notNow: loadJSON('dlpNotNow', {}),
     settings: Object.assign({
-      mode: 'balanced', singleRider: false, parkHop: false, softPlans: false,
+      mode: 'balanced', singleRider: false, parkHop: false, softPlans: false, precisionRouting: true,
       mealBuffer: 15, trainBuffer: 35, walkSpeed: 55, routeFactor: 1.25,
       preview: false, previewDate: '2026-10-30', previewTime: '17:00', location: 'Disneyland Park entrance', locationSource: 'default'
     }, loadJSON('dlpSettings', {}))
@@ -215,10 +221,60 @@
     return 2 * R * Math.asin(Math.sqrt(q));
   }
   function walkMinutes(a,b) {
+    const routed=precisionRouteMeters(a,b);
+    if(Number.isFinite(routed))return Math.max(1,Math.ceil(routed/Number(state.settings.walkSpeed)));
     const d = haversine(a,b);
     if (d == null) return 7;
     return Math.max(1, Math.ceil((d * Number(state.settings.routeFactor)) / Number(state.settings.walkSpeed)));
   }
+  function precisionRoutingEnabled() { return !!state.settings.precisionRouting && sessionMode()==='TEST' && !!state.routingReady; }
+  function graphNearest(point) {
+    if (!state.routingGraph || !point) return null;
+    const key=`${Number(point.lat).toFixed(5)},${Number(point.lon).toFixed(5)}`;
+    if(state.routingGraph.snapCache.has(key))return state.routingGraph.snapCache.get(key);
+    let best=null;
+    for(const n of state.routingGraph.nodes){const d=haversine(point,n);if(!best||d<best.d)best={id:n.id,lat:n.lat,lon:n.lon,d};}
+    if(best)state.routingGraph.snapCache.set(key,best);
+    return best;
+  }
+  function dijkstraFrom(startId) {
+    const g=state.routingGraph;if(!g)return null;
+    if(g.sourceCache.has(startId))return g.sourceCache.get(startId);
+    const dist=new Map([[startId,0]]), heap=[[0,startId]];
+    function push(item){heap.push(item);let i=heap.length-1;while(i){const p=(i-1)>>1;if(heap[p][0]<=item[0])break;heap[i]=heap[p];i=p;}heap[i]=item;}
+    function pop(){if(!heap.length)return null;const root=heap[0],last=heap.pop();if(heap.length){let i=0;heap[0]=last;while(true){let l=i*2+1,r=l+1,b=i;if(l<heap.length&&heap[l][0]<heap[b][0])b=l;if(r<heap.length&&heap[r][0]<heap[b][0])b=r;if(b===i)break;[heap[i],heap[b]]=[heap[b],heap[i]];i=b;}}return root;}
+    while(heap.length){const [du,u]=pop();if(du!==dist.get(u))continue;for(const [v,w] of (g.adj.get(u)||[])){const nd=du+w;if(nd<(dist.get(v)??Infinity)){dist.set(v,nd);push([nd,v]);}}}
+    g.sourceCache.set(startId,dist);if(g.sourceCache.size>6){const first=g.sourceCache.keys().next().value;if(first!==startId)g.sourceCache.delete(first);}
+    return dist;
+  }
+  function precisionRouteMeters(a,b) {
+    if(!precisionRoutingEnabled())return null;
+    const A=graphNearest(a),B=graphNearest(b);if(!A||!B)return null;
+    let distMap=state.routingGraph.sourceCache.get(A.id), graphM;
+    if(distMap)graphM=distMap.get(B.id);
+    else {distMap=state.routingGraph.sourceCache.get(B.id);if(distMap)graphM=distMap.get(A.id);}
+    if(graphM==null){distMap=dijkstraFrom(A.id);graphM=distMap?.get(B.id);}
+    if(!Number.isFinite(graphM))return null;
+    return A.d+graphM+B.d;
+  }
+  function prepareRoutingContext(commitment=null) {
+    if(!precisionRoutingEnabled())return;
+    const cur=graphNearest(currentPoint());if(cur)dijkstraFrom(cur.id);
+    if(commitment){const cp=graphNearest(pointForCommitment(commitment));if(cp)dijkstraFrom(cp.id);}
+  }
+  function routingAttraction(name){return state.routingLocations?.attractions?.[keyFor(name)]||null;}
+  function pointForCommitment(c){const p=precisionRoutingEnabled()?state.routingLocations?.commitments?.[c?.id]?.entrance:null;return p?{lat:p.lat,lon:p.lon,park:areaPoint(c.area)?.park}:areaPoint(c?.area);}
+  async function loadRoutingData(){
+    try{
+      const [gr,lr]=await Promise.all([fetch('data/routing-graph.json?v=0.6.0'),fetch('data/routing-locations.json?v=0.6.0')]);
+      if(!gr.ok||!lr.ok)throw new Error(`routing data ${gr.status}/${lr.status}`);
+      const raw=await gr.json(),loc=await lr.json(),nodes=raw.nodes.map(n=>({id:n[0],lat:n[1],lon:n[2]})),adj=new Map();
+      for(const n of nodes)adj.set(n.id,[]);for(const [a,b,m] of raw.edges){if(adj.has(a)&&adj.has(b)){adj.get(a).push([b,m]);adj.get(b).push([a,m]);}}
+      state.routingGraph={nodes,adj,snapCache:new Map(),sourceCache:new Map(),generatedAt:raw.generatedAt,profile:raw.profile};state.routingLocations=loc;state.routingReady=true;state.routingError=null;renderAll();
+    }catch(e){console.warn('Precision routing unavailable',e);state.routingError=String(e?.message||e);state.routingReady=false;renderAll();}
+  }
+
+
   function isThemePark(park) { return park === 'Disneyland Park' || park === 'Disney Adventure World'; }
   function isParkHop(fromPark, toPark) { return isThemePark(fromPark) && isThemePark(toPark) && fromPark !== toPark; }
   function parkHopPenalty(fromPark, toPark) { return isParkHop(fromPark, toPark) ? PARK_HOP_TIME_MIN : 0; }
@@ -230,7 +286,9 @@
     return true;
   }
   function rideRowId(k) { return `ride-${k.replace(/[^a-z0-9]+/g,'-')}`; }
-  function pointForRide(ride) {
+  function pointForRide(ride, purpose='entrance') {
+    const routed=precisionRoutingEnabled()?routingAttraction(ride.name)?.[purpose]:null;
+    if(routed&&Number.isFinite(routed.lat)&&Number.isFinite(routed.lon))return {lat:routed.lat,lon:routed.lon,park:ride.park,confidence:routed.confidence};
     if (Number.isFinite(ride.lat) && Number.isFinite(ride.lon)) return { lat: ride.lat, lon: ride.lon, park: ride.park };
     const m = metaFor(ride.name);
     return areaPoint(ride.area) || areaPoint(m.area) || (ride.park === 'Disney Adventure World' ? areaPoint('Disney Adventure World entrance') : areaPoint('Disneyland Park entrance'));
@@ -484,7 +542,7 @@
     const fromPark = currentPark();
     const parkHop = isParkHop(fromPark, ride.park);
     if (parkHop && !state.settings.parkHop) return null;
-    const from = currentPoint(), to = pointForRide(ride);
+    const from = currentPoint(), to = pointForRide(ride,'entrance'), rideExit=pointForRide(ride,'exit');
     const walkTo = walkMinutes(from,to) + parkHopPenalty(fromPark,ride.park);
     let chosenWait = ride.wait, queueLabel = 'Standby';
     if (state.settings.singleRider && Number.isFinite(ride.singleRiderWait) && ride.singleRiderWait < chosenWait) { chosenWait=ride.singleRiderWait; queueLabel='Single Rider'; }
@@ -492,10 +550,10 @@
     const commitmentMinutes = walkTo + chosenWait + dwellMinutes;
     let walkOnward=0, minutesToTarget=null, fits=true, target=null, anchorConsumption=null, anchorSlack=null, tightFit=false;
     if (commitment) {
-      const cPoint=areaPoint(commitment.area);
+      const cPoint=pointForCommitment(commitment);
       const safeAt=new Date(parisDateTime(commitment.date,commitment.time).getTime()-bufferFor(commitment)*60000);
       minutesToTarget=Math.floor((safeAt-now)/60000);
-      walkOnward=walkMinutes(to,cPoint)+parkHopPenalty(ride.park,cPoint?.park);
+      walkOnward=walkMinutes(rideExit,cPoint)+parkHopPenalty(ride.park,cPoint?.park);
       const totalNeeded=walkTo+chosenWait+dwellMinutes+walkOnward;
       anchorConsumption=totalNeeded;
       anchorSlack=minutesToTarget-totalNeeded;
@@ -545,6 +603,7 @@
     if(x.meta.category==='show')bits.push('show / cinema');
     if(x.meta.category==='playground')bits.push('time filler with realistic play time');
     if(state.settings.mode==='balanced'&&x.commitmentMinutes<=30)bits.push('short total commitment');
+    if(precisionRoutingEnabled())bits.push('stroller-route walking estimate');
     if(['ride','headline'].includes(x.meta.category)&&x.chosenWait<=15)bits.push('short queue now');
     if(x.parkHop)bits.push('requires park hop');
     if(x.rideFresh.level==='aging')bits.push('queue update is aging');
@@ -552,7 +611,7 @@
     if(x.tightFit)bits.push('tight fit with booking protected');
     return bits.length?bits.join(', '):'solid fit for the current rules';
   }
-  function allRecommendations(){const now=plannerNow(),c=nextCommitment(now);return state.rides.map(r=>evaluateRide(r,now,c)).filter(Boolean).sort((a,b)=>b.score-a.score);}
+  function allRecommendations(){const now=plannerNow(),c=nextCommitment(now);prepareRoutingContext(c);return state.rides.map(r=>evaluateRide(r,now,c)).filter(Boolean).sort((a,b)=>b.score-a.score);}
   function topRecommendations(){return allRecommendations().slice(0,3);}
 
   function renderAll() {
@@ -595,6 +654,8 @@
       $('#nextMeta').textContent = state.settings.preview ? 'No later fixed point on this preview day.' : 'Live queues still work. Use Preview to test trip deconfliction.';
       $('#countdown').textContent = '--';
       $('#safeLine').textContent = 'Recommendations are not time-blocked outside the trip dates.';
+      const ub=$('#urgencyBadge');if(ub){ub.hidden=true;ub.className='urgency-badge';}
+      $('.hero').classList.remove('urgency-safe','urgency-tight','urgency-now');
       return;
     }
     const at = parisDateTime(c.date,c.time), safeAt = new Date(at.getTime()-bufferFor(c)*60000);
@@ -602,13 +663,17 @@
     $('#nextName').textContent = c.name;
     $('#nextMeta').textContent = `${fmtDate(c.date)} · ${c.time} · ${c.area}${c.hard?'':' · soft plan'}`;
     $('#countdown').textContent = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins} min`;
-    $('#safeLine').textContent = `Target arrival ${parisTime(safeAt)}. The engine will reject any attraction that cannot finish and get you there by then.`;
+    const cPoint=pointForCommitment(c), directWalk=walkMinutes(currentPoint(),cPoint)+parkHopPenalty(currentPark(),cPoint?.park), directSlack=mins-directWalk;
+    const urgency=directSlack<=HARD_ANCHOR_MIN_SLACK?'now':directSlack<15?'tight':'safe';
+    const ub=$('#urgencyBadge');if(ub){ub.hidden=false;ub.className=`urgency-badge ${urgency}`;ub.textContent=urgency==='now'?'⛔ MOVE NOW':urgency==='tight'?'⚠ GETTING TIGHT':'✓ SAFE';}
+    $('.hero').classList.remove('urgency-safe','urgency-tight','urgency-now');$('.hero').classList.add(`urgency-${urgency}`);
+    $('#safeLine').textContent = `Target arrival ${parisTime(safeAt)} · about ${directWalk}m direct walk · ${directSlack}m direct-route slack. The engine rejects anything that cannot finish and get you there safely.`;
   }
 
   function renderRecommendations() {
     const recs = topRecommendations(), all = allRecommendations(), box = $('#recommendations');
     if (!state.rides.length) { box.innerHTML = '<div class="card loading">No live attraction data yet.</div>'; renderParkHopNote([]); return; }
-    if (!recs.length) { box.innerHTML = '<div class="card empty">Nothing with fresh, explicit OPEN data safely fits the current rules. Head toward the next anchor or relax the filters.</div>'; renderParkHopNote(all); return; }
+    if (!recs.length) { const c=nextCommitment(plannerNow());let msg='Nothing with fresh, explicit OPEN data safely fits the current rules.';if(c){const cp=pointForCommitment(c),safeAt=new Date(parisDateTime(c.date,c.time).getTime()-bufferFor(c)*60000),mins=Math.max(0,Math.floor((safeAt-plannerNow())/60000)),walk=walkMinutes(currentPoint(),cp)+parkHopPenalty(currentPark(),cp?.park),slack=mins-walk;msg=slack<=HARD_ANCHOR_MIN_SLACK?`⛔ MOVE NOW · Head to ${c.name}. No attraction fits with a safe transfer margin.`:`No attraction fits safely. Start heading toward ${c.name} or enjoy the area without joining another queue.`;}box.innerHTML=`<div class="card empty ${msg.startsWith('⛔')?'move-now':''}">${esc(msg)}</div>`; renderParkHopNote(all); return; }
     box.innerHTML = recs.map((x,i)=>{
       const k=keyFor(x.ride.name), opp=x.avg==null?null:x.avg-x.chosenWait;
       const oppText=opp==null?'no historical baseline':opp>=10?`${opp}m below 2026 avg`:opp<=-10?`${Math.abs(opp)}m above 2026 avg`:'near usual wait';
@@ -617,8 +682,9 @@
       const disagreeTag=x.ride.feedDisagreement?.kind==='wait'?'<span class="tag warn">FEEDS DISAGREE</span>':'';
       const hopTag=x.parkHop?'<span class="tag warn">PARK HOP</span>':'';
       const agingTag=x.rideFresh.level==='aging'?'<span class="tag warn">AGING DATA</span>':'';
-      const tightTag=x.tightFit?'<span class="tag warn">TIGHT FIT</span>':'';
-      return `<article class="card reco" data-card-jump="${esc(k)}"><div class="rank">${i+1}</div><button class="ride-link" data-jump="${esc(k)}">${esc(x.ride.name)}</button><div class="location-line"><span class="chip">${esc(x.ride.park)}</span>${x.meta.area?`<span class="chip">${esc(x.meta.area)}</span>`:''}</div><div class="big-wait">${x.chosenWait}<span> min ${x.queueLabel}</span></div><div class="tags"><span class="tag category">${esc(x.meta.label)}</span><span class="tag ${opp!=null&&opp>=10?'good':opp!=null&&opp<=-10?'warn':''}">${oppText}</span><span class="tag">${x.walkTo}m walk</span>${priorityTag}${disagreeTag}${hopTag}${agingTag}${tightTag}</div><div class="why"><strong>Why:</strong> ${esc(recommendationReason(x))}. Estimated finished about <strong>${parisTime(x.finish)}</strong>${onward}. Total commitment about <strong>${x.commitmentMinutes}m</strong>, including ${x.dwellMinutes}m experience time.</div><div class="reco-actions"><button class="done-btn" data-reco-done="${esc(k)}">DONE</button><button class="not-now-btn" data-reco-notnow="${esc(k)}">Not now</button></div></article>`;
+      const tightTag=x.tightFit?'<span class="tag warn">⚠ TIGHT FIT</span>':'';
+      const routeTag=precisionRoutingEnabled()?'<span class="tag good">STROLLER ROUTE</span>':'';
+      return `<article class="card reco ${x.tightFit?'tight-fit':'safe-fit'}" data-card-jump="${esc(k)}"><div class="rank">${i+1}</div><button class="ride-link" data-jump="${esc(k)}">${esc(x.ride.name)}</button><div class="location-line"><span class="chip">${esc(x.ride.park)}</span>${x.meta.area?`<span class="chip">${esc(x.meta.area)}</span>`:''}</div><div class="big-wait">${x.chosenWait}<span> min ${x.queueLabel}</span></div><div class="tags"><span class="tag category">${esc(x.meta.label)}</span><span class="tag ${opp!=null&&opp>=10?'good':opp!=null&&opp<=-10?'warn':''}">${oppText}</span><span class="tag">${x.walkTo}m walk</span>${priorityTag}${disagreeTag}${hopTag}${agingTag}${tightTag}${routeTag}</div><div class="why"><strong>Why:</strong> ${esc(recommendationReason(x))}. Estimated finished about <strong>${parisTime(x.finish)}</strong>${onward}. Total commitment about <strong>${x.commitmentMinutes}m</strong>, including ${x.dwellMinutes}m experience time.</div><div class="reco-actions"><button class="done-btn" data-reco-done="${esc(k)}">DONE</button><button class="not-now-btn" data-reco-notnow="${esc(k)}">Not now</button></div></article>`;
     }).join('');
     $$('[data-reco-done]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();markDoneWithUndo(b.dataset.recoDone);}));
     $$('[data-reco-notnow]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();deferRide(b.dataset.recoNotnow);}));
@@ -703,6 +769,7 @@
     $('#singleRiderToggle').checked = !!state.settings.singleRider;
     $('#parkHopToggle').checked = !!state.settings.parkHop;
     $('#softPlansToggle').checked = !!state.settings.softPlans;
+    const pr=$('#precisionRoutingToggle');if(pr){pr.checked=!!state.settings.precisionRouting;pr.disabled=sessionMode()==='LIVE';}
     $('#previewToggle').checked = !!state.settings.preview;
     $('#previewDate').value = state.settings.previewDate;
     $('#previewTime').value = state.settings.previewTime;
@@ -721,25 +788,17 @@
 
   function useGPS() {
     if (!navigator.geolocation) return toast('This browser does not expose location.');
-    $('#gpsBtn').disabled = true; $('#gpsBtn').textContent = 'Locating...';
-    navigator.geolocation.getCurrentPosition(pos=>{
-      state.gps = { lat:pos.coords.latitude, lon:pos.coords.longitude, park:null };
-      state.gpsAccuracy = pos.coords.accuracy;
-      const near = nearestArea(state.gps);
-      if (gpsNearDLP()) {
-        $('#gpsBtn').textContent = `GPS: ${near.name}`;
-        toast(`LIVE mode enabled near ${near.name}`);
-      } else {
-        const km = (gpsDistanceFromDLP()/1000).toFixed(1);
-        $('#gpsBtn').textContent = 'GPS: outside DLP';
-        toast(`GPS is ${km} km from DLP. Staying in TEST mode.`);
-      }
-      $('#gpsBtn').disabled = false;
-      renderAll();
-    }, err=>{
-      $('#gpsBtn').disabled = false; $('#gpsBtn').textContent = 'Use my location';
-      toast(err.message || 'Location permission failed.');
-    }, { enableHighAccuracy:true, timeout:12000, maximumAge:60000 });
+    if(state.gpsWatchId!=null){navigator.geolocation.clearWatch(state.gpsWatchId);state.gpsWatchId=null;}
+    $('#gpsBtn').disabled=true;$('#gpsBtn').textContent='Locating...';let first=true;
+    state.gpsWatchId=navigator.geolocation.watchPosition(pos=>{
+      const accuracy=Number(pos.coords.accuracy||999),next={lat:pos.coords.latitude,lon:pos.coords.longitude,park:null};
+      if(!first&&accuracy>80&&Number(state.gpsAccuracy||999)<40)return;
+      const moved=state.gps?haversine(state.gps,next):Infinity,now=Date.now();state.gps=next;state.gpsAccuracy=accuracy;
+      const near=nearestArea(state.gps),inPark=gpsNearDLP();$('#gpsBtn').disabled=false;
+      if(inPark){$('#gpsBtn').textContent=`GPS live · ±${Math.round(accuracy)}m`;if(first)toast(`LIVE GPS tracking near ${near.name}`);}
+      else{$('#gpsBtn').textContent='GPS: outside DLP';if(first)toast(`GPS is ${(gpsDistanceFromDLP()/1000).toFixed(1)} km from DLP. Staying in TEST mode.`);navigator.geolocation.clearWatch(state.gpsWatchId);state.gpsWatchId=null;}
+      if(first||moved>=8||now-state.gpsLastRenderAt>=15000){state.gpsLastRenderAt=now;renderAll();}first=false;
+    },err=>{$('#gpsBtn').disabled=false;$('#gpsBtn').textContent='Use my location';toast(err.message||'Location permission failed.');if(state.gpsWatchId!=null){navigator.geolocation.clearWatch(state.gpsWatchId);state.gpsWatchId=null;}},{enableHighAccuracy:true,timeout:12000,maximumAge:5000});
   }
 
   function feedDisagreementSummary(d) {
@@ -778,14 +837,14 @@
       return `${name}: ${tag}, eligible, score ${result.score.toFixed(1)}, ${result.chosenWait}m ${result.queueLabel}${anchor}`;
     }
     if(commitment){
-      const meta=metaFor(ride.name), from=currentPoint(), to=pointForRide(ride);
+      const meta=metaFor(ride.name), from=currentPoint(), to=pointForRide(ride,'entrance'), rideExit=pointForRide(ride,'exit');
       const walkTo=walkMinutes(from,to)+parkHopPenalty(fromPark,ride.park);
       let chosenWait=ride.wait;
       if(state.settings.singleRider&&Number.isFinite(ride.singleRiderWait)&&ride.singleRiderWait<chosenWait)chosenWait=ride.singleRiderWait;
-      const dwellMinutes=experienceMinutes(meta), cPoint=areaPoint(commitment.area);
+      const dwellMinutes=experienceMinutes(meta), cPoint=pointForCommitment(commitment);
       const safeAt=new Date(parisDateTime(commitment.date,commitment.time).getTime()-bufferFor(commitment)*60000);
       const minutesToTarget=Math.floor((safeAt-now)/60000);
-      const walkOnward=walkMinutes(to,cPoint)+parkHopPenalty(ride.park,cPoint?.park);
+      const walkOnward=walkMinutes(rideExit,cPoint)+parkHopPenalty(ride.park,cPoint?.park);
       const totalNeeded=walkTo+chosenWait+dwellMinutes+walkOnward;
       const slack=minutesToTarget-totalNeeded, required=commitment.hard?HARD_ANCHOR_MIN_SLACK:0;
       return `${name}: ${tag}, excluded: anchor slack ${slack}m < ${required}m minimum (${totalNeeded}m needed)`;
@@ -823,7 +882,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.5.3',
+      'DLP DISPATCHER STATUS v0.6.0',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -831,6 +890,7 @@
       `Location source: ${locationSourceLabel()}`,
       `Mode: ${state.settings.mode}; Single Rider: ${state.settings.singleRider?'yes':'no'}; Park hopping: ${state.settings.parkHop?'consider':'stay in current park'}`,
       `Current park for routing: ${currentPark() || 'unknown'}`,
+      `Routing model: ${precisionRoutingEnabled()?'precision stroller graph (TEST), exact entrance/exit where confidence allows':state.settings.precisionRouting&&!state.routingReady?`legacy estimate; precision data unavailable${state.routingError?` (${state.routingError})`:''}`:'legacy straight-line estimate'}`,
       `Primary live source: ${state.source || 'none'}${state.sourceUpdated?`; updated ${state.sourceUpdated.toISOString()}`:''}; freshness ${fresh.level}${fresh.mins==null?'':` (${fresh.mins}m old)`}`,
       `Secondary cross-check: ${state.secondarySource || 'unavailable'}; material disagreements ${state.feedDisagreements.length}${state.secondaryError?`; diagnostic ${state.secondaryError}`:''}`,
       `Feed disagreement detail: ${state.feedDisagreements.length ? state.feedDisagreements.map(feedDisagreementSummary).join(' | ') : 'none'}`,
@@ -848,7 +908,7 @@
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.5.3 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.6.0 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 
@@ -861,6 +921,7 @@
     $('#singleRiderToggle').addEventListener('change',e=>{state.settings.singleRider=e.target.checked;save();renderAll();});
     $('#parkHopToggle').addEventListener('change',e=>{state.settings.parkHop=e.target.checked;save();renderAll();});
     $('#softPlansToggle').addEventListener('change',e=>{state.settings.softPlans=e.target.checked;save();renderAll();});
+    $('#precisionRoutingToggle').addEventListener('change',e=>{state.settings.precisionRouting=e.target.checked;save();renderAll();});
     $('#previewToggle').addEventListener('change',e=>{state.settings.preview=e.target.checked;save();renderAll();});
     $('#previewDate').addEventListener('change',e=>{state.settings.previewDate=e.target.value;save();renderAll();});
     $('#previewTime').addEventListener('change',e=>{state.settings.previewTime=e.target.value;save();renderAll();});
@@ -874,7 +935,7 @@
   }
 
   function refreshOnResume(){if(document.visibilityState!=='visible')return;const age=state.lastFetchedAt?(Date.now()-state.lastFetchedAt.getTime()):Infinity;if(age>60000)refreshLive();else{renderSourceAge();renderWaitBoard();}}
-  initLocationSelect(); bind(); renderAll(); refreshLive();
+  initLocationSelect(); bind(); renderAll(); loadRoutingData(); refreshLive();
   setInterval(refreshLive, REFRESH_MS);
   setInterval(()=>{renderHero();renderPreviewSummary();renderSourceAge();renderWaitBoard();},60000);
   document.addEventListener('visibilitychange',refreshOnResume);

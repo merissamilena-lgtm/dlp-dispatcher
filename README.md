@@ -1,19 +1,20 @@
-# DLP Dispatcher v0.5.3
+# DLP Dispatcher v0.6.0
 
-This build hardens fixed-booking protection and expands TEST-mode diagnostics without changing the v0.5.2 recommendation philosophy.
+This build adds the first precision-routing test layer while preserving the v0.5.3 scoring and booking safety rules.
 
-## Booking safety
-- Hard anchors require at least 5 minutes of residual slack after walk, queue, attraction time and onward travel are counted.
-- Hard-anchor candidates with under 5 minutes remaining are rejected.
-- Candidates with 5 to 9 minutes remaining are allowed but visibly marked TIGHT FIT.
-- Soft plans keep the existing zero-slack feasibility rule.
+## Precision routing
+- TEST-only feature flag. LIVE recommendations continue to fall back to the proven legacy model.
+- Loads a locally hosted OpenStreetMap pedestrian graph generated for the Disneyland Paris resort.
+- Pushchair profile excludes steps and explicitly private/no-foot routes.
+- Uses curated/strong or candidate queue entrances where public map evidence supports them, otherwise falls back to ThemeParks.wiki attraction coordinates.
+- Routes onward travel from attraction exit data where available, with safe POI fallback.
+- Fixed-point restaurants use attraction-level/entrance-level coordinates instead of land centres where available.
+- Continuous high-accuracy GPS tracking starts in-resort after Use my location; poor fixes are damped.
 
-## TEST packet diagnostics
-- Lists active MUST, WANT and SKIP priorities.
-- Explains whether priority attractions are eligible or why they were excluded.
-- Reports score, onward walk, anchor consumption and anchor slack for recommendations.
-- Includes the next three eligible candidates after the top three.
-- Reports whether the next anchor is HARD or SOFT, its applied buffer and the hard-anchor residual-slack rule.
+## Glanceable urgency
+- Green SAFE, yellow GETTING TIGHT / TIGHT FIT, red MOVE NOW.
+- The next-anchor card now reports direct walking time and remaining direct-route slack.
+- Empty recommendation state becomes an explicit MOVE NOW instruction when the family needs to head to the anchor immediately.
 
-## Intent
-Protect fixed reservations first, while making test packets detailed enough to diagnose why the engine chose or rejected an attraction without dumping the entire live board.
+## Safety
+Precision routing is deliberately TEST-only until route comparisons are validated. The v0.5.3 hard-anchor residual-slack rule remains intact.
