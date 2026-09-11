@@ -1,0 +1,36 @@
+name: Apply DLP Dispatcher v0.5.1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/apply-v051.mjs'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply v0.5.1 patch
+        run: node tools/apply-v051.mjs
+      - name: Validate JavaScript
+        run: |
+          node --check app.js
+          node --check sw.js
+      - name: Commit v0.5.1
+        run: |
+          if git diff --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app.js index.html sw.js README.md
+          git commit -m 'DLP Dispatcher v0.5.1 disagreement detail'
+          git push
