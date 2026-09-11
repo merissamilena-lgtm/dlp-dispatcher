@@ -17,6 +17,8 @@
   const PARK_HOP_TIME_MIN = 15;
   const PARK_HOP_SCORE_PENALTY = 30;
   const NOT_NOW_MIN = 30;
+  const HARD_ANCHOR_MIN_SLACK = 5;
+  const HARD_ANCHOR_TIGHT_SLACK = 10;
 
   const AREAS = {
     'Disneyland Park entrance': { lat: 48.87070, lon: 2.77972, park: 'Disneyland Park' },
@@ -488,15 +490,19 @@
     if (state.settings.singleRider && Number.isFinite(ride.singleRiderWait) && ride.singleRiderWait < chosenWait) { chosenWait=ride.singleRiderWait; queueLabel='Single Rider'; }
     const dwellMinutes = experienceMinutes(meta);
     const commitmentMinutes = walkTo + chosenWait + dwellMinutes;
-    let walkOnward=0, minutesToTarget=null, fits=true, target=null;
+    let walkOnward=0, minutesToTarget=null, fits=true, target=null, anchorConsumption=null, anchorSlack=null, tightFit=false;
     if (commitment) {
       const cPoint=areaPoint(commitment.area);
       const safeAt=new Date(parisDateTime(commitment.date,commitment.time).getTime()-bufferFor(commitment)*60000);
       minutesToTarget=Math.floor((safeAt-now)/60000);
       walkOnward=walkMinutes(to,cPoint)+parkHopPenalty(ride.park,cPoint?.park);
       const totalNeeded=walkTo+chosenWait+dwellMinutes+walkOnward;
-      fits=totalNeeded<=minutesToTarget;
-      target={safeAt,totalNeeded};
+      anchorConsumption=totalNeeded;
+      anchorSlack=minutesToTarget-totalNeeded;
+      const requiredSlack=commitment.hard?HARD_ANCHOR_MIN_SLACK:0;
+      fits=anchorSlack>=requiredSlack;
+      tightFit=!!commitment.hard&&anchorSlack>=HARD_ANCHOR_MIN_SLACK&&anchorSlack<HARD_ANCHOR_TIGHT_SLACK;
+      target={safeAt,totalNeeded,slack:anchorSlack,requiredSlack};
     }
     if (!fits) return null;
     const avg=baselineFor(ride.name);
@@ -524,9 +530,9 @@
     if (state.settings.mode==='rain') score+=meta.indoor?12:-25;
     if (ride.feedDisagreement?.kind==='wait') score-=12;
     if (rideFresh.level==='aging') score-=8;
-    if (commitment&&target) { const slack=minutesToTarget-target.totalNeeded; score+=Math.min(8,slack*.08); if(slack<10)score-=9; if(slack<20&&['ride','headline','scenic','show'].includes(meta.category))score+=4; }
+    if (commitment&&target) { const slack=target.slack; score+=Math.min(8,slack*.08); if(slack<10)score-=9; if(slack<20&&['ride','headline','scenic','show'].includes(meta.category))score+=4; }
     const finish=new Date(now.getTime()+(walkTo+chosenWait+dwellMinutes)*60000);
-    return {ride,score,walkTo,walkOnward,chosenWait,queueLabel,dwellMinutes,commitmentMinutes,avg,opportunity,priority,finish,meta:{...meta,area},minutesToTarget,target,parkHop,rideFresh};
+    return {ride,score,walkTo,walkOnward,chosenWait,queueLabel,dwellMinutes,commitmentMinutes,anchorConsumption,anchorSlack,tightFit,avg,opportunity,priority,finish,meta:{...meta,area},minutesToTarget,target,parkHop,rideFresh};
   }
 
   function recommendationReason(x) {
@@ -543,6 +549,7 @@
     if(x.parkHop)bits.push('requires park hop');
     if(x.rideFresh.level==='aging')bits.push('queue update is aging');
     if(x.ride.feedDisagreement?.kind==='wait')bits.push('feeds disagree on wait');
+    if(x.tightFit)bits.push('tight fit with booking protected');
     return bits.length?bits.join(', '):'solid fit for the current rules';
   }
   function allRecommendations(){const now=plannerNow(),c=nextCommitment(now);return state.rides.map(r=>evaluateRide(r,now,c)).filter(Boolean).sort((a,b)=>b.score-a.score);}
@@ -605,12 +612,13 @@
     box.innerHTML = recs.map((x,i)=>{
       const k=keyFor(x.ride.name), opp=x.avg==null?null:x.avg-x.chosenWait;
       const oppText=opp==null?'no historical baseline':opp>=10?`${opp}m below 2026 avg`:opp<=-10?`${Math.abs(opp)}m above 2026 avg`:'near usual wait';
-      const onward=x.target?` · ${x.walkOnward}m onward walk`:'';
+      const onward=x.target?` · ${x.walkOnward}m onward walk · ${x.anchorConsumption}m to anchor · ${x.anchorSlack}m slack`:'';
       const priorityTag=x.priority==='must'?'<span class="tag good">MUST</span>':x.priority==='want'?'<span class="tag">WANT</span>':'';
       const disagreeTag=x.ride.feedDisagreement?.kind==='wait'?'<span class="tag warn">FEEDS DISAGREE</span>':'';
       const hopTag=x.parkHop?'<span class="tag warn">PARK HOP</span>':'';
       const agingTag=x.rideFresh.level==='aging'?'<span class="tag warn">AGING DATA</span>':'';
-      return `<article class="card reco" data-card-jump="${esc(k)}"><div class="rank">${i+1}</div><button class="ride-link" data-jump="${esc(k)}">${esc(x.ride.name)}</button><div class="location-line"><span class="chip">${esc(x.ride.park)}</span>${x.meta.area?`<span class="chip">${esc(x.meta.area)}</span>`:''}</div><div class="big-wait">${x.chosenWait}<span> min ${x.queueLabel}</span></div><div class="tags"><span class="tag category">${esc(x.meta.label)}</span><span class="tag ${opp!=null&&opp>=10?'good':opp!=null&&opp<=-10?'warn':''}">${oppText}</span><span class="tag">${x.walkTo}m walk</span>${priorityTag}${disagreeTag}${hopTag}${agingTag}</div><div class="why"><strong>Why:</strong> ${esc(recommendationReason(x))}. Estimated finished about <strong>${parisTime(x.finish)}</strong>${onward}. Total commitment about <strong>${x.commitmentMinutes}m</strong>, including ${x.dwellMinutes}m experience time.</div><div class="reco-actions"><button class="done-btn" data-reco-done="${esc(k)}">DONE</button><button class="not-now-btn" data-reco-notnow="${esc(k)}">Not now</button></div></article>`;
+      const tightTag=x.tightFit?'<span class="tag warn">TIGHT FIT</span>':'';
+      return `<article class="card reco" data-card-jump="${esc(k)}"><div class="rank">${i+1}</div><button class="ride-link" data-jump="${esc(k)}">${esc(x.ride.name)}</button><div class="location-line"><span class="chip">${esc(x.ride.park)}</span>${x.meta.area?`<span class="chip">${esc(x.meta.area)}</span>`:''}</div><div class="big-wait">${x.chosenWait}<span> min ${x.queueLabel}</span></div><div class="tags"><span class="tag category">${esc(x.meta.label)}</span><span class="tag ${opp!=null&&opp>=10?'good':opp!=null&&opp<=-10?'warn':''}">${oppText}</span><span class="tag">${x.walkTo}m walk</span>${priorityTag}${disagreeTag}${hopTag}${agingTag}${tightTag}</div><div class="why"><strong>Why:</strong> ${esc(recommendationReason(x))}. Estimated finished about <strong>${parisTime(x.finish)}</strong>${onward}. Total commitment about <strong>${x.commitmentMinutes}m</strong>, including ${x.dwellMinutes}m experience time.</div><div class="reco-actions"><button class="done-btn" data-reco-done="${esc(k)}">DONE</button><button class="not-now-btn" data-reco-notnow="${esc(k)}">Not now</button></div></article>`;
     }).join('');
     $$('[data-reco-done]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();markDoneWithUndo(b.dataset.recoDone);}));
     $$('[data-reco-notnow]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();deferRide(b.dataset.recoNotnow);}));
@@ -741,8 +749,57 @@
     return `${d.name || 'unknown attraction'}: ${d.kind || 'unknown'} disagreement`;
   }
 
+  function priorityStateSummary(level) {
+    const keys=Object.keys(state.priorities).filter(k=>state.priorities[k]===level);
+    if(!keys.length)return 'none';
+    return keys.map(k=>state.rides.find(r=>keyFor(r.name)===k)?.name||k).join(', ');
+  }
+
+  function priorityDiagnostic(k,now,commitment) {
+    const priority=state.priorities[k]||'neutral';
+    const tag=priority.toUpperCase();
+    const ride=state.rides.find(r=>keyFor(r.name)===k);
+    const name=ride?.name||k;
+    if(!ride)return `${name}: ${tag}, excluded: not in current live feed`;
+    if(priority==='skip')return `${name}: SKIP, excluded by user`;
+    if(state.done[k])return `${name}: ${tag}, excluded: DONE`;
+    if(isDeferred(k))return `${name}: ${tag}, excluded: snoozed ${deferredRemaining(k)}m`;
+    if(ride.status!=='OPERATING')return `${name}: ${tag}, excluded: ${prettyStatus(ride.status)}`;
+    if(ride.wait==null)return `${name}: ${tag}, excluded: wait unavailable`;
+    const freshness=attractionFreshness(ride);
+    if(freshness.level==='stale'||freshness.level==='unknown')return `${name}: ${tag}, excluded: ${freshness.level} data${freshness.mins==null?'':` ${freshness.mins}m old`}`;
+    if(ride.feedDisagreement?.kind==='status')return `${name}: ${tag}, excluded: feeds disagree on operating status`;
+    const fromPark=currentPark();
+    const parkHop=isParkHop(fromPark,ride.park);
+    if(parkHop&&!state.settings.parkHop)return `${name}: ${tag}, excluded: park hop disabled`;
+    const result=evaluateRide(ride,now,commitment);
+    if(result){
+      const anchor=result.target?`, anchor consumption ${result.anchorConsumption}m, slack ${result.anchorSlack}m${result.tightFit?', TIGHT FIT':''}`:'';
+      return `${name}: ${tag}, eligible, score ${result.score.toFixed(1)}, ${result.chosenWait}m ${result.queueLabel}${anchor}`;
+    }
+    if(commitment){
+      const meta=metaFor(ride.name), from=currentPoint(), to=pointForRide(ride);
+      const walkTo=walkMinutes(from,to)+parkHopPenalty(fromPark,ride.park);
+      let chosenWait=ride.wait;
+      if(state.settings.singleRider&&Number.isFinite(ride.singleRiderWait)&&ride.singleRiderWait<chosenWait)chosenWait=ride.singleRiderWait;
+      const dwellMinutes=experienceMinutes(meta), cPoint=areaPoint(commitment.area);
+      const safeAt=new Date(parisDateTime(commitment.date,commitment.time).getTime()-bufferFor(commitment)*60000);
+      const minutesToTarget=Math.floor((safeAt-now)/60000);
+      const walkOnward=walkMinutes(to,cPoint)+parkHopPenalty(ride.park,cPoint?.park);
+      const totalNeeded=walkTo+chosenWait+dwellMinutes+walkOnward;
+      const slack=minutesToTarget-totalNeeded, required=commitment.hard?HARD_ANCHOR_MIN_SLACK:0;
+      return `${name}: ${tag}, excluded: anchor slack ${slack}m < ${required}m minimum (${totalNeeded}m needed)`;
+    }
+    return `${name}: ${tag}, excluded by current rules`;
+  }
+
+  function packetRecommendation(x,rank) {
+    const anchor=x.target?`, ${x.walkOnward}m onward, ${x.anchorConsumption}m anchor consumption, ${x.anchorSlack}m anchor slack${x.tightFit?', TIGHT FIT':''}`:'';
+    return `${rank}) ${x.ride.name} ${x.chosenWait}m ${x.queueLabel}, ${x.walkTo}m walk, ${x.meta.label}, ${x.dwellMinutes}m experience, ${x.commitmentMinutes}m attraction commitment${anchor}, score ${x.score.toFixed(1)}, data ${x.rideFresh.level}${x.rideFresh.mins==null?'':` ${x.rideFresh.mins}m old`}; reason: ${recommendationReason(x)}`;
+  }
+
   async function copyPacket() {
-    const now = plannerNow(), c = nextCommitment(now), recs = topRecommendations();
+    const now = plannerNow(), c = nextCommitment(now), allRecs = allRecommendations(), recs = allRecs.slice(0,3), nextRecs = allRecs.slice(3,6);
     const live = sessionMode() === 'LIVE';
     const near = state.gps ? nearestArea(state.gps) : null;
     const location = live ? `GPS near ${near.name}` : state.settings.location;
@@ -760,12 +817,13 @@
     if (c) {
       const safeAt = new Date(parisDateTime(c.date,c.time).getTime()-bufferFor(c)*60000);
       const safeMins = Math.max(0, Math.floor((safeAt-now)/60000));
-      commitmentLine = `Next fixed point: ${c.name} at ${c.time}; target arrival ${parisTime(safeAt)}; area ${c.area}`;
+      const anchorType=c.hard?'HARD':'SOFT', appliedBuffer=bufferFor(c), residual=c.hard?`; minimum residual slack ${HARD_ANCHOR_MIN_SLACK}m`:'';
+      commitmentLine = `Next fixed point: ${c.name} at ${c.time}; target arrival ${parisTime(safeAt)}; area ${c.area}; ${anchorType}; buffer ${appliedBuffer}m${residual}`;
       safeMinutesLine = `Safe time remaining: ${safeMins} minutes until target arrival`;
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.5.2',
+      'DLP DISPATCHER STATUS v0.5.3',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -778,14 +836,19 @@
       `Feed disagreement detail: ${state.feedDisagreements.length ? state.feedDisagreements.map(feedDisagreementSummary).join(' | ') : 'none'}`,
       commitmentLine,
       safeMinutesLine,
-      `Top engine picks: ${recs.map((x,i)=>`${i+1}) ${x.ride.name} ${x.chosenWait}m ${x.queueLabel}, ${x.walkTo}m walk, ${x.meta.label}, ${x.dwellMinutes}m experience, ${x.commitmentMinutes}m total commitment, data ${x.rideFresh.level}${x.rideFresh.mins==null?'':` ${x.rideFresh.mins}m old`}; reason: ${recommendationReason(x)}`).join(' | ') || 'none'}`,
+      `Top engine picks: ${recs.map((x,i)=>packetRecommendation(x,i+1)).join(' | ') || 'none'}`,
+      ...(!live ? [
+        `Priority state: MUST: ${priorityStateSummary('must')} | WANT: ${priorityStateSummary('want')} | SKIP: ${priorityStateSummary('skip')}`,
+        `Priority diagnostics: ${Object.keys(state.priorities).filter(k=>['must','want','skip'].includes(state.priorities[k])).map(k=>priorityDiagnostic(k,now,c)).join(' | ') || 'none'}`,
+        `Next eligible candidates: ${nextRecs.map((x,i)=>packetRecommendation(x,i+4)).join(' | ') || 'none'}`
+      ] : []),
       `Done this trip: ${doneNames.length ? doneNames.join(', ') : 'none marked'}`,
       `Deferred/not now: ${Object.keys(state.notNow).filter(isDeferred).map(k=>{const name=state.rides.find(r=>keyFor(r.name)===k)?.name||k;return `${name} (${deferredRemaining(k)}m remaining)`;}).join(', ')||'none'}`,
       live
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.5.2 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.5.3 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 
