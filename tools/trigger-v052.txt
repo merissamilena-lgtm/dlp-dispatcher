@@ -1,0 +1,1 @@
+Trigger v0.5.2 scoring upgrade.
