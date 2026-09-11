@@ -3,6 +3,7 @@
 
   const TPW_DESTINATION = 'e8d0207f-da8a-4048-bec8-117aa946b2c2';
   const TPW_BASE = 'https://api.themeparks.wiki/v1';
+  const QT_PROXY_BASE = 'https://dlp-queue-proxy.rnspecfor.workers.dev';
   const QT_PARKS = [
     { id: 4, park: 'Disneyland Park' },
     { id: 28, park: 'Disney Adventure World' }
@@ -299,8 +300,8 @@
 
   async function fetchQueueTimes() {
     const results = await Promise.all(QT_PARKS.map(async p => {
-      const res = await fetch(`https://queue-times.com/parks/${p.id}/queue_times.json`, { cache:'no-store' });
-      if (!res.ok) throw new Error(`Queue-Times ${res.status}`);
+      const res = await fetch(`${QT_PROXY_BASE}/parks/${p.id}`, { cache:'no-store' });
+      if (!res.ok) throw new Error(`Queue-Times proxy ${res.status}`);
       const data = await res.json();
       const raw = [...(data.rides || []), ...(data.lands || []).flatMap(l => l.rides || [])];
       return raw.map(r => ({...r, park:p.park}));
@@ -402,11 +403,15 @@
 
   function friendlySecondaryError(reason) {
     const message = String(reason?.message || reason || 'browser fetch failed');
-    if (/load failed|failed to fetch|cors|networkerror/i.test(message)) return 'Queue-Times browser cross-check blocked by browser/CORS';
-    return `Queue-Times: ${message}`;
+    if (/load failed|failed to fetch|networkerror/i.test(message)) return 'Queue-Times proxy unreachable';
+    return `Queue-Times proxy: ${message}`;
   }
 
+  let refreshInFlight = null;
+
   async function refreshLive() {
+    if (refreshInFlight) return refreshInFlight;
+    refreshInFlight = (async () => {
     setStatus('loading','Connecting');
     $('#refreshBtn').disabled = true;
     try {
@@ -439,6 +444,12 @@
       renderAll();
     } finally {
       $('#refreshBtn').disabled = false;
+    }
+    })();
+    try {
+      return await refreshInFlight;
+    } finally {
+      refreshInFlight = null;
     }
   }
 
@@ -736,7 +747,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.4',
+      'DLP DISPATCHER STATUS v0.5',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -755,7 +766,7 @@
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.4 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.5 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 

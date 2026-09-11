@@ -10,11 +10,11 @@
   <title>DLP Dispatcher</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=0.4.0" />
+  <link rel="stylesheet" href="styles.css?v=0.5.0" />
 </head>
 <body>
   <header class="topbar">
-    <div><div class="eyebrow">30 Oct to 2 Nov 2026 · v0.4</div><h1>DLP Dispatcher</h1></div>
+    <div><div class="eyebrow">30 Oct to 2 Nov 2026 · v0.5</div><h1>DLP Dispatcher</h1></div>
     <div class="status-pill" id="liveStatus"><span class="dot"></span><span>Connecting</span></div>
   </header>
   <main>
@@ -35,7 +35,7 @@
     <section class="card"><details><summary>Settings and trip tuning</summary><div class="settings-grid"><label><span>Meal arrival buffer</span><input id="mealBuffer" type="number" min="0" max="45" step="5" value="15" /><small>minutes</small></label><label><span>Train arrival buffer</span><input id="trainBuffer" type="number" min="10" max="90" step="5" value="35" /><small>minutes</small></label><label><span>Walking speed</span><input id="walkSpeed" type="number" min="35" max="90" step="5" value="55" /><small>metres/min</small></label><label><span>Route fudge factor</span><input id="routeFactor" type="number" min="1" max="2" step="0.05" value="1.25" /><small>straight-line multiplier</small></label></div><div class="button-row"><button id="resetProgress">Reset DONE marks</button><button id="resetPriorities">Reset priorities</button></div></details></section>
     <section class="card note-card"><strong>Operating rule:</strong> never risk a fixed booking for one more attraction. The engine estimates walking, queueing, realistic experience time and onward travel, then rejects anything that does not fit with the selected buffer.</section>
   </main>
-  <footer><div>Independent trip tool, not affiliated with Disney.</div><div>Primary live data: <a href="https://themeparks.wiki/" target="_blank" rel="noreferrer">ThemeParks.wiki</a>. Queue-Times is used as a secondary cross-check only when the browser permits it.</div></footer>
+  <footer><div>Independent trip tool, not affiliated with Disney.</div><div>Primary live data: <a href="https://themeparks.wiki/" target="_blank" rel="noreferrer">ThemeParks.wiki</a>. Secondary cross-check: <a href="https://queue-times.com/" target="_blank" rel="noreferrer">Powered by Queue-Times.com</a> via the DLP Dispatcher proxy.</div></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastUndo" type="button" hidden>Undo</button></div>
-  <script src="app.js?v=0.4.0"></script>
+  <script src="app.js?v=0.5.0"></script>
 </body></html>
