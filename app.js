@@ -220,12 +220,15 @@
     const q = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;
     return 2 * R * Math.asin(Math.sqrt(q));
   }
-  function walkMinutes(a,b) {
-    const routed=precisionRouteMeters(a,b);
-    if(Number.isFinite(routed))return Math.max(1,Math.ceil(routed/Number(state.settings.walkSpeed)));
+  function legacyWalkMinutes(a,b) {
     const d = haversine(a,b);
     if (d == null) return 7;
     return Math.max(1, Math.ceil((d * Number(state.settings.routeFactor)) / Number(state.settings.walkSpeed)));
+  }
+  function walkMinutes(a,b) {
+    const routed=precisionRouteMeters(a,b);
+    if(Number.isFinite(routed))return Math.max(1,Math.ceil(routed/Number(state.settings.walkSpeed)));
+    return legacyWalkMinutes(a,b);
   }
   function precisionRoutingEnabled() { return !!state.settings.precisionRouting && sessionMode()==='TEST' && !!state.routingReady; }
   function graphNearest(point) {
@@ -266,7 +269,7 @@
   function pointForCommitment(c){const p=precisionRoutingEnabled()?state.routingLocations?.commitments?.[c?.id]?.entrance:null;return p?{lat:p.lat,lon:p.lon,park:areaPoint(c.area)?.park}:areaPoint(c?.area);}
   async function loadRoutingData(){
     try{
-      const [gr,lr]=await Promise.all([fetch('data/routing-graph.json?v=0.6.0'),fetch('data/routing-locations.json?v=0.6.0')]);
+      const [gr,lr]=await Promise.all([fetch('data/routing-graph.json?v=0.6.1'),fetch('data/routing-locations.json?v=0.6.1')]);
       if(!gr.ok||!lr.ok)throw new Error(`routing data ${gr.status}/${lr.status}`);
       const raw=await gr.json(),loc=await lr.json(),nodes=raw.nodes.map(n=>({id:n[0],lat:n[1],lon:n[2]})),adj=new Map();
       for(const n of nodes)adj.set(n.id,[]);for(const [a,b,m] of raw.edges){if(adj.has(a)&&adj.has(b)){adj.get(a).push([b,m]);adj.get(b).push([a,m]);}}
@@ -852,6 +855,43 @@
     return `${name}: ${tag}, excluded by current rules`;
   }
 
+  function legacyPointForRide(ride) {
+    if (Number.isFinite(ride.lat) && Number.isFinite(ride.lon)) return { lat: ride.lat, lon: ride.lon, park: ride.park };
+    const m = metaFor(ride.name);
+    return areaPoint(ride.area) || areaPoint(m.area) || (ride.park === 'Disney Adventure World' ? areaPoint('Disney Adventure World entrance') : areaPoint('Disneyland Park entrance'));
+  }
+  function endpointEvidence(point) {
+    if (!point) return 'unmapped';
+    return `${point.confidence || 'unknown'} (${point.source || 'unknown'})`;
+  }
+  function routingDiagnostic(x, commitment) {
+    if (!precisionRoutingEnabled()) return null;
+    const from = currentPoint();
+    const legacyRide = legacyPointForRide(x.ride);
+    const precisionEntry = pointForRide(x.ride,'entrance');
+    const precisionExit = pointForRide(x.ride,'exit');
+    const locationData = routingAttraction(x.ride.name);
+    const toLegacy = legacyWalkMinutes(from,legacyRide) + parkHopPenalty(currentPark(),x.ride.park);
+    const bits = [
+      `to ride precision ${x.walkTo}m vs legacy ${toLegacy}m`,
+      `entrance ${endpointEvidence(locationData?.entrance)}`,
+      `exit ${endpointEvidence(locationData?.exit)}`
+    ];
+    if (commitment) {
+      const precisionAnchor = pointForCommitment(commitment);
+      const legacyAnchor = areaPoint(commitment.area);
+      const legacyOnward = legacyWalkMinutes(legacyRide,legacyAnchor) + parkHopPenalty(x.ride.park,legacyAnchor?.park);
+      const anchorEvidence = state.routingLocations?.commitments?.[commitment.id]?.entrance;
+      bits.push(`onward precision ${x.walkOnward}m vs legacy ${legacyOnward}m`);
+      bits.push(`anchor entrance ${endpointEvidence(anchorEvidence)}`);
+      const entrySnap = graphNearest(precisionEntry), exitSnap = graphNearest(precisionExit), anchorSnap = graphNearest(precisionAnchor);
+      if (entrySnap) bits.push(`entry snap ${Math.round(entrySnap.d)}m`);
+      if (exitSnap) bits.push(`exit snap ${Math.round(exitSnap.d)}m`);
+      if (anchorSnap) bits.push(`anchor snap ${Math.round(anchorSnap.d)}m`);
+    }
+    return `${x.ride.name}: ${bits.join('; ')}`;
+  }
+
   function packetRecommendation(x,rank) {
     const anchor=x.target?`, ${x.walkOnward}m onward, ${x.anchorConsumption}m anchor consumption, ${x.anchorSlack}m anchor slack${x.tightFit?', TIGHT FIT':''}`:'';
     return `${rank}) ${x.ride.name} ${x.chosenWait}m ${x.queueLabel}, ${x.walkTo}m walk, ${x.meta.label}, ${x.dwellMinutes}m experience, ${x.commitmentMinutes}m attraction commitment${anchor}, score ${x.score.toFixed(1)}, data ${x.rideFresh.level}${x.rideFresh.mins==null?'':` ${x.rideFresh.mins}m old`}; reason: ${recommendationReason(x)}`;
@@ -882,7 +922,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.6.0',
+      'DLP DISPATCHER STATUS v0.6.1',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -898,6 +938,7 @@
       safeMinutesLine,
       `Top engine picks: ${recs.map((x,i)=>packetRecommendation(x,i+1)).join(' | ') || 'none'}`,
       ...(!live ? [
+        `Routing diagnostics: ${precisionRoutingEnabled() ? (recs.map(x=>routingDiagnostic(x,c)).filter(Boolean).join(' | ') || 'no eligible top candidates') : 'precision routing disabled or unavailable'}`,
         `Priority state: MUST: ${priorityStateSummary('must')} | WANT: ${priorityStateSummary('want')} | SKIP: ${priorityStateSummary('skip')}`,
         `Priority diagnostics: ${Object.keys(state.priorities).filter(k=>['must','want','skip'].includes(state.priorities[k])).map(k=>priorityDiagnostic(k,now,c)).join(' | ') || 'none'}`,
         `Next eligible candidates: ${nextRecs.map((x,i)=>packetRecommendation(x,i+4)).join(' | ') || 'none'}`
@@ -908,7 +949,7 @@
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.6.0 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.6.1 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 

@@ -1,6 +1,6 @@
-# DLP Dispatcher v0.6.0
+# DLP Dispatcher v0.6.1
 
-This build adds the first precision-routing test layer while preserving the v0.5.3 scoring and booking safety rules.
+This build adds TEST packet route-vs-legacy diagnostics to the precision-routing layer while preserving the v0.5.3 scoring and booking safety rules.
 
 ## Precision routing
 - TEST-only feature flag. LIVE recommendations continue to fall back to the proven legacy model.
@@ -18,3 +18,10 @@ This build adds the first precision-routing test layer while preserving the v0.5
 
 ## Safety
 Precision routing is deliberately TEST-only until route comparisons are validated. The v0.5.3 hard-anchor residual-slack rule remains intact.
+
+
+## v0.6.1 routing diagnostics
+- TEST packets compare precision stroller-graph walking time with the previous legacy estimate for each top candidate.
+- Reports attraction entrance and exit confidence/source, plus fixed-point entrance confidence.
+- Reports graph snap distance for ride entrance, ride exit and fixed point so weak endpoint geometry is visible during validation.
+- No scoring weights or hard-anchor safety thresholds changed.
