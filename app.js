@@ -195,7 +195,7 @@
     const n = norm(name);
     const special = EXPERIENCE_RULES.find(x => n.includes(x.p));
     if (special) return special;
-    if (HEADLINE_PATTERNS.some(p => n.includes(p))) return { category: 'headline', label: 'Headline ride', bonus: 15 };
+    if (HEADLINE_PATTERNS.some(p => n.includes(p))) return { category: 'headline', label: 'Headline ride', bonus: 12 };
     return { category: 'ride', label: 'Ride', bonus: 5 };
   }
   function metaFor(name) {
@@ -487,6 +487,7 @@
     let chosenWait = ride.wait, queueLabel = 'Standby';
     if (state.settings.singleRider && Number.isFinite(ride.singleRiderWait) && ride.singleRiderWait < chosenWait) { chosenWait=ride.singleRiderWait; queueLabel='Single Rider'; }
     const dwellMinutes = experienceMinutes(meta);
+    const commitmentMinutes = walkTo + chosenWait + dwellMinutes;
     let walkOnward=0, minutesToTarget=null, fits=true, target=null;
     if (commitment) {
       const cPoint=areaPoint(commitment.area);
@@ -509,6 +510,14 @@
     else if (meta.category==='show') score+=chosenWait<=10?2:-3;
     else if (meta.category==='playground') score+=chosenWait<=5?1:-8;
     else if (chosenWait===0) score-=6;
+    if (state.settings.mode==='balanced') {
+      if (chosenWait<=10) score+=6;
+      else if (chosenWait<=15) score+=5;
+      else if (chosenWait<=20) score+=2;
+      const excessCommitment=Math.max(0,commitmentMinutes-30);
+      score-=excessCommitment*.60;
+      if (commitmentMinutes<=30) score+=(30-commitmentMinutes)*.12;
+    }
     if (parkHop) score-=PARK_HOP_SCORE_PENALTY;
     score-=walkTo*(state.settings.mode==='lowWalk'?2.4:1.15);
     if (state.settings.mode==='queueHunter') score+=opportunity*.45;
@@ -517,7 +526,7 @@
     if (rideFresh.level==='aging') score-=8;
     if (commitment&&target) { const slack=minutesToTarget-target.totalNeeded; score+=Math.min(8,slack*.08); if(slack<10)score-=9; if(slack<20&&['ride','headline','scenic','show'].includes(meta.category))score+=4; }
     const finish=new Date(now.getTime()+(walkTo+chosenWait+dwellMinutes)*60000);
-    return {ride,score,walkTo,walkOnward,chosenWait,queueLabel,dwellMinutes,avg,opportunity,priority,finish,meta:{...meta,area},minutesToTarget,target,parkHop,rideFresh};
+    return {ride,score,walkTo,walkOnward,chosenWait,queueLabel,dwellMinutes,commitmentMinutes,avg,opportunity,priority,finish,meta:{...meta,area},minutesToTarget,target,parkHop,rideFresh};
   }
 
   function recommendationReason(x) {
@@ -529,6 +538,8 @@
     if(x.meta.category==='scenic')bits.push('scenic attraction');
     if(x.meta.category==='show')bits.push('show / cinema');
     if(x.meta.category==='playground')bits.push('time filler with realistic play time');
+    if(state.settings.mode==='balanced'&&x.commitmentMinutes<=30)bits.push('short total commitment');
+    if(['ride','headline'].includes(x.meta.category)&&x.chosenWait<=15)bits.push('short queue now');
     if(x.parkHop)bits.push('requires park hop');
     if(x.rideFresh.level==='aging')bits.push('queue update is aging');
     if(x.ride.feedDisagreement?.kind==='wait')bits.push('feeds disagree on wait');
@@ -599,7 +610,7 @@
       const disagreeTag=x.ride.feedDisagreement?.kind==='wait'?'<span class="tag warn">FEEDS DISAGREE</span>':'';
       const hopTag=x.parkHop?'<span class="tag warn">PARK HOP</span>':'';
       const agingTag=x.rideFresh.level==='aging'?'<span class="tag warn">AGING DATA</span>':'';
-      return `<article class="card reco" data-card-jump="${esc(k)}"><div class="rank">${i+1}</div><button class="ride-link" data-jump="${esc(k)}">${esc(x.ride.name)}</button><div class="location-line"><span class="chip">${esc(x.ride.park)}</span>${x.meta.area?`<span class="chip">${esc(x.meta.area)}</span>`:''}</div><div class="big-wait">${x.chosenWait}<span> min ${x.queueLabel}</span></div><div class="tags"><span class="tag category">${esc(x.meta.label)}</span><span class="tag ${opp!=null&&opp>=10?'good':opp!=null&&opp<=-10?'warn':''}">${oppText}</span><span class="tag">${x.walkTo}m walk</span>${priorityTag}${disagreeTag}${hopTag}${agingTag}</div><div class="why"><strong>Why:</strong> ${esc(recommendationReason(x))}. Estimated finished about <strong>${parisTime(x.finish)}</strong>${onward}. Includes about ${x.dwellMinutes}m experience time.</div><div class="reco-actions"><button class="done-btn" data-reco-done="${esc(k)}">DONE</button><button class="not-now-btn" data-reco-notnow="${esc(k)}">Not now</button></div></article>`;
+      return `<article class="card reco" data-card-jump="${esc(k)}"><div class="rank">${i+1}</div><button class="ride-link" data-jump="${esc(k)}">${esc(x.ride.name)}</button><div class="location-line"><span class="chip">${esc(x.ride.park)}</span>${x.meta.area?`<span class="chip">${esc(x.meta.area)}</span>`:''}</div><div class="big-wait">${x.chosenWait}<span> min ${x.queueLabel}</span></div><div class="tags"><span class="tag category">${esc(x.meta.label)}</span><span class="tag ${opp!=null&&opp>=10?'good':opp!=null&&opp<=-10?'warn':''}">${oppText}</span><span class="tag">${x.walkTo}m walk</span>${priorityTag}${disagreeTag}${hopTag}${agingTag}</div><div class="why"><strong>Why:</strong> ${esc(recommendationReason(x))}. Estimated finished about <strong>${parisTime(x.finish)}</strong>${onward}. Total commitment about <strong>${x.commitmentMinutes}m</strong>, including ${x.dwellMinutes}m experience time.</div><div class="reco-actions"><button class="done-btn" data-reco-done="${esc(k)}">DONE</button><button class="not-now-btn" data-reco-notnow="${esc(k)}">Not now</button></div></article>`;
     }).join('');
     $$('[data-reco-done]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();markDoneWithUndo(b.dataset.recoDone);}));
     $$('[data-reco-notnow]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();deferRide(b.dataset.recoNotnow);}));
@@ -754,7 +765,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.5.1',
+      'DLP DISPATCHER STATUS v0.5.2',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -767,14 +778,14 @@
       `Feed disagreement detail: ${state.feedDisagreements.length ? state.feedDisagreements.map(feedDisagreementSummary).join(' | ') : 'none'}`,
       commitmentLine,
       safeMinutesLine,
-      `Top engine picks: ${recs.map((x,i)=>`${i+1}) ${x.ride.name} ${x.chosenWait}m ${x.queueLabel}, ${x.walkTo}m walk, ${x.meta.label}, ${x.dwellMinutes}m experience, data ${x.rideFresh.level}${x.rideFresh.mins==null?'':` ${x.rideFresh.mins}m old`}; reason: ${recommendationReason(x)}`).join(' | ') || 'none'}`,
+      `Top engine picks: ${recs.map((x,i)=>`${i+1}) ${x.ride.name} ${x.chosenWait}m ${x.queueLabel}, ${x.walkTo}m walk, ${x.meta.label}, ${x.dwellMinutes}m experience, ${x.commitmentMinutes}m total commitment, data ${x.rideFresh.level}${x.rideFresh.mins==null?'':` ${x.rideFresh.mins}m old`}; reason: ${recommendationReason(x)}`).join(' | ') || 'none'}`,
       `Done this trip: ${doneNames.length ? doneNames.join(', ') : 'none marked'}`,
       `Deferred/not now: ${Object.keys(state.notNow).filter(isDeferred).map(k=>{const name=state.rides.find(r=>keyFor(r.name)===k)?.name||k;return `${name} (${deferredRemaining(k)}m remaining)`;}).join(', ')||'none'}`,
       live
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.5.1 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.5.2 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 

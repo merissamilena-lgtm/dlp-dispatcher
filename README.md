@@ -1,19 +1,14 @@
-# DLP Dispatcher v0.5.1
+# DLP Dispatcher v0.5.2
 
-This build adds a real dual-source live-data path.
+This build tunes recommendation quality in Balanced mode.
 
-## Highlights
-- Feed-disagreement details are now included in the ChatGPT status packet, with attraction name and both source values.
-- ThemeParks.wiki remains the primary live source.
-- Queue-Times now runs through a Cloudflare Worker proxy, so the browser can use it as a proper secondary cross-check instead of being blocked by CORS.
-- Status disagreements between the feeds remain excluded from recommendations.
-- Material wait-time disagreements are flagged and penalised.
-- Queue-Times attribution is linked in the app footer.
-- Live refreshes are de-duplicated so manual refresh, resume refresh and the five-minute timer cannot start overlapping fetches.
-- All v0.4 freshness, OPEN-only gating, realistic dwell-time, booking deconfliction, snooze and park-hop logic is retained.
+## Scoring changes
+- Headline rides still get a meaningful boost, but no longer dominate on status alone.
+- Balanced mode now rewards genuinely short live queues.
+- Balanced mode scores total commitment time: walk + queue + attraction experience.
+- Long commitments are progressively penalised, while efficient sub-30-minute opportunities get a small boost.
+- MUST/WANT priorities, fixed-booking protection, freshness gating, feed disagreement penalties and park-hop costs remain intact.
+- Recommendation cards and ChatGPT packets now expose total commitment time for easier testing.
 
-## Cloudflare Worker
-The proxy lives in `worker/` and deploys as `dlp-queue-proxy`. It permits requests from the GitHub Pages origin and proxies Queue-Times park IDs 4 and 28.
-
-## Deploy
-The repository is connected to both GitHub Pages and Cloudflare Workers. Commits to `main` redeploy the app and the Worker automatically.
+## Goal
+A 40-minute headline queue should not automatically beat a strong 5 to 15 minute family attraction nearby. If the headline wait falls to a genuinely good level, it should rise rapidly back up the ranking.
