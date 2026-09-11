@@ -723,6 +723,13 @@
     }, { enableHighAccuracy:true, timeout:12000, maximumAge:60000 });
   }
 
+  function feedDisagreementSummary(d) {
+    if (!d) return 'unknown disagreement';
+    if (d.kind === 'status') return `${d.name}: status, ThemeParks.wiki ${d.primary} vs Queue-Times.com ${d.secondary}`;
+    if (d.kind === 'wait') return `${d.name}: wait, ThemeParks.wiki ${d.primary}m vs Queue-Times.com ${d.secondary}m (${d.diff}m difference)`;
+    return `${d.name || 'unknown attraction'}: ${d.kind || 'unknown'} disagreement`;
+  }
+
   async function copyPacket() {
     const now = plannerNow(), c = nextCommitment(now), recs = topRecommendations();
     const live = sessionMode() === 'LIVE';
@@ -747,7 +754,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.5',
+      'DLP DISPATCHER STATUS v0.5.1',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -757,6 +764,7 @@
       `Current park for routing: ${currentPark() || 'unknown'}`,
       `Primary live source: ${state.source || 'none'}${state.sourceUpdated?`; updated ${state.sourceUpdated.toISOString()}`:''}; freshness ${fresh.level}${fresh.mins==null?'':` (${fresh.mins}m old)`}`,
       `Secondary cross-check: ${state.secondarySource || 'unavailable'}; material disagreements ${state.feedDisagreements.length}${state.secondaryError?`; diagnostic ${state.secondaryError}`:''}`,
+      `Feed disagreement detail: ${state.feedDisagreements.length ? state.feedDisagreements.map(feedDisagreementSummary).join(' | ') : 'none'}`,
       commitmentLine,
       safeMinutesLine,
       `Top engine picks: ${recs.map((x,i)=>`${i+1}) ${x.ride.name} ${x.chosenWait}m ${x.queueLabel}, ${x.walkTo}m walk, ${x.meta.label}, ${x.dwellMinutes}m experience, data ${x.rideFresh.level}${x.rideFresh.mins==null?'':` ${x.rideFresh.mins}m old`}; reason: ${recommendationReason(x)}`).join(' | ') || 'none'}`,
@@ -766,7 +774,7 @@
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.5 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.5.1 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 

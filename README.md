@@ -1,8 +1,9 @@
-# DLP Dispatcher v0.5
+# DLP Dispatcher v0.5.1
 
 This build adds a real dual-source live-data path.
 
 ## Highlights
+- Feed-disagreement details are now included in the ChatGPT status packet, with attraction name and both source values.
 - ThemeParks.wiki remains the primary live source.
 - Queue-Times now runs through a Cloudflare Worker proxy, so the browser can use it as a proper secondary cross-check instead of being blocked by CORS.
 - Status disagreements between the feeds remain excluded from recommendations.
