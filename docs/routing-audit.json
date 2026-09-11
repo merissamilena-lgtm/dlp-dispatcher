@@ -1,0 +1,2257 @@
+{
+  "generatedAt": "2026-09-11T14:22:24.544Z",
+  "bbox": {
+    "south": 48.863,
+    "west": 2.77,
+    "north": 48.8768,
+    "east": 2.7878
+  },
+  "counts": {
+    "themeparks": {
+      "entities": 156,
+      "attractions": 51,
+      "attractionsWithCoordinates": 51,
+      "dining": 52,
+      "diningWithCoordinates": 52
+    },
+    "osm": {
+      "poiElements": 448,
+      "attractionFeatures": 120,
+      "diningFeatures": 52,
+      "stations": 8,
+      "entrances": 249,
+      "namedEntrances": 7,
+      "walkWays": 1997,
+      "walkGraphNodes": 13443,
+      "walkGraphComponents": 74,
+      "largestWalkComponentNodes": 12094,
+      "largestWalkComponentShare": 90
+    },
+    "attractionCoverage": {
+      "osmNameMatches": 49,
+      "strongEntrances": 5,
+      "candidateEntrances25m": 14,
+      "nearbyEntrances60m": 18,
+      "noNearbyEntrance60m": 14,
+      "centroidWithin25mOfWalkGraph": 51,
+      "centroidWithin50mOfWalkGraph": 51
+    }
+  },
+  "attractions": [
+    {
+      "id": "252b9b03-f770-4979-b3b2-f4ffecc3894d",
+      "name": "Alice's Curious Labyrinth",
+      "coordinate": {
+        "lat": 48.874461,
+        "lon": 2.774518
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 905816888,
+        "name": "Alice's Curious Labyrinth",
+        "score": 1,
+        "distanceM": 4
+      },
+      "nearestEntrance": {
+        "id": 13474532807,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 80,
+        "coordinate": {
+          "lat": 48.8751669,
+          "lon": 2.7742984
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "ff2e7d6f-5aaf-47b8-8695-53a66e9fe073",
+      "name": "Avengers Assemble: Flight Force",
+      "coordinate": {
+        "lat": 48.86544789048844,
+        "lon": 2.7794149518013
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1271516009,
+        "name": "Avengers Assemble: Flight Force",
+        "score": 1,
+        "distanceM": 111
+      },
+      "nearestEntrance": {
+        "id": 10704079614,
+        "name": null,
+        "tag": "entrance",
+        "distanceM": 29,
+        "coordinate": {
+          "lat": 48.8653655,
+          "lon": 2.77904
+        }
+      },
+      "entranceOnMatchedWay": {
+        "id": 9860326544,
+        "name": null,
+        "tag": "entrance",
+        "coordinate": {
+          "lat": 48.8650225,
+          "lon": 2.7793623
+        }
+      },
+      "entranceConfidence": "strong",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "6bb88973-80d0-45cf-bffe-433f1c551362",
+      "name": "Horse-Drawn Streetcars",
+      "coordinate": {
+        "lat": 48.871058,
+        "lon": 2.778806
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 12544309283,
+        "name": "Horse-Drawn Streetcars",
+        "score": 1,
+        "distanceM": 6
+      },
+      "nearestEntrance": {
+        "id": 12544309280,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 60,
+        "coordinate": {
+          "lat": 48.8710789,
+          "lon": 2.7779802
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "63dfcdab-86c2-4185-99b1-5a353d81bb52",
+      "name": "Adventure Isle",
+      "coordinate": {
+        "lat": 48.872736,
+        "lon": 2.77316
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 26625259,
+        "name": "Adventure Isle",
+        "score": 1,
+        "distanceM": 20
+      },
+      "nearestEntrance": {
+        "id": 11551971741,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 58,
+        "coordinate": {
+          "lat": 48.8724676,
+          "lon": 2.7738387
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 0
+    },
+    {
+      "id": "8ed1472a-4d2e-47f1-b848-353de0bc3670",
+      "name": "Blanche-Neige et les Sept Nains®",
+      "coordinate": {
+        "lat": 48.873445,
+        "lon": 2.775298
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1267201555,
+        "name": "Blanche-Neige et les Sept Nains®",
+        "score": 1,
+        "distanceM": 18
+      },
+      "nearestEntrance": {
+        "id": 12598937686,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 4,
+        "coordinate": {
+          "lat": 48.8734556,
+          "lon": 2.7753505
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 4
+    },
+    {
+      "id": "03992704-698d-474b-a721-a5ac3498edb9",
+      "name": "Buzz Lightyear Laser Blast",
+      "coordinate": {
+        "lat": 48.87343,
+        "lon": 2.777947
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 905816995,
+        "name": "Buzz Lightyear Laser Blast",
+        "score": 1,
+        "distanceM": 12
+      },
+      "nearestEntrance": {
+        "id": 2142295160,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 63,
+        "coordinate": {
+          "lat": 48.873368,
+          "lon": 2.7788
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "7ff5d512-aed5-479a-8b3d-9bd1efb4177b",
+      "name": "Casey Jr. – le Petit Train du Cirque",
+      "coordinate": {
+        "lat": 48.875176,
+        "lon": 2.774151
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 1012694152,
+        "name": "Casey Jr. – le Petit Train du Cirque",
+        "score": 1,
+        "distanceM": 23
+      },
+      "nearestEntrance": {
+        "id": 10891931089,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 2,
+        "coordinate": {
+          "lat": 48.8751626,
+          "lon": 2.7741782
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "5d0ce227-7ad0-4402-a95b-6cf56f25a8ec",
+      "name": "Indiana Jones™ and the Temple of Peril",
+      "coordinate": {
+        "lat": 48.872429,
+        "lon": 2.772029
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 40362832,
+        "name": "Indiana Jones™ and the Temple of Peril",
+        "score": 1,
+        "distanceM": 41
+      },
+      "nearestEntrance": {
+        "id": 11420450614,
+        "name": null,
+        "tag": "main",
+        "distanceM": 1,
+        "coordinate": {
+          "lat": 48.8724173,
+          "lon": 2.7720249
+        }
+      },
+      "entranceOnMatchedWay": {
+        "id": 11420450568,
+        "name": null,
+        "tag": "main",
+        "coordinate": {
+          "lat": 48.8723968,
+          "lon": 2.7720235
+        }
+      },
+      "entranceConfidence": "strong",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "7e426533-7727-47e5-8c8e-0dcd46198e57",
+      "name": "La Cabane des Robinson",
+      "coordinate": {
+        "lat": 48.872336,
+        "lon": 2.773744
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1230887898,
+        "name": "La Cabane des Robinson",
+        "score": 1,
+        "distanceM": 2
+      },
+      "nearestEntrance": {
+        "id": 11551971741,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 16,
+        "coordinate": {
+          "lat": 48.8724676,
+          "lon": 2.7738387
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "53895b6d-d25d-4e08-a489-0c3d47dd183f",
+      "name": "Disneyland Railroad Frontierland Depot",
+      "coordinate": {
+        "lat": 48.870246,
+        "lon": 2.772255
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 258856858,
+        "name": "Disneyland Railroad Frontierland Depot",
+        "score": 1,
+        "distanceM": 10
+      },
+      "nearestEntrance": {
+        "id": 11415144228,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 1,
+        "coordinate": {
+          "lat": 48.8702378,
+          "lon": 2.7722596
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "a5afa85c-ee58-4f47-8626-fa4057e7d266",
+      "name": "Disneyland Railroad Main Street Station",
+      "coordinate": {
+        "lat": 48.870814,
+        "lon": 2.77909
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 258856843,
+        "name": "Disneyland Railroad Main Street Station",
+        "score": 1,
+        "distanceM": 3
+      },
+      "nearestEntrance": {
+        "id": 5450056707,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 51,
+        "coordinate": {
+          "lat": 48.8703633,
+          "lon": 2.7789386
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 6
+    },
+    {
+      "id": "46406e4a-4a02-4d30-89bc-ef1ed63c1ff9",
+      "name": "Dumbo the Flying Elephant",
+      "coordinate": {
+        "lat": 48.874152,
+        "lon": 2.774606
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 51551435,
+        "name": "Dumbo the Flying Elephant",
+        "score": 1,
+        "distanceM": 18
+      },
+      "nearestEntrance": {
+        "id": 12598937686,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 95,
+        "coordinate": {
+          "lat": 48.8734556,
+          "lon": 2.7753505
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "03871aa6-a0b5-41ee-8fd3-b2f4b8dccc79",
+      "name": "Frontierland Playground",
+      "coordinate": {
+        "lat": 48.870336,
+        "lon": 2.774223
+      },
+      "osmMatch": null,
+      "nearestEntrance": {
+        "id": 11387998830,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 27,
+        "coordinate": {
+          "lat": 48.8705129,
+          "lon": 2.7739627
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 7
+    },
+    {
+      "id": "38bafc85-cb48-488e-aa68-3e2d01ae6a10",
+      "name": "La Galerie de la Belle au Bois Dormant",
+      "coordinate": {
+        "lat": 48.873101,
+        "lon": 2.776212
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 2596961709,
+        "name": "La Galerie de la Belle au Bois Dormant",
+        "score": 1,
+        "distanceM": 26
+      },
+      "nearestEntrance": {
+        "id": 12598937686,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 74,
+        "coordinate": {
+          "lat": 48.8734556,
+          "lon": 2.7753505
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 2
+    },
+    {
+      "id": "d8d9f62a-9fa3-4aae-a568-4225afc35924",
+      "name": "Les Mystères du Nautilus",
+      "coordinate": {
+        "lat": 48.873432,
+        "lon": 2.779553
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 11251510637,
+        "name": "Les Mystères du Nautilus",
+        "score": 1,
+        "distanceM": 4
+      },
+      "nearestEntrance": {
+        "id": 8963976681,
+        "name": null,
+        "tag": "emergency",
+        "distanceM": 28,
+        "coordinate": {
+          "lat": 48.8732915,
+          "lon": 2.7798694
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 2
+    },
+    {
+      "id": "83fa9e7f-4a25-4bee-8e61-4fb8c59cd350",
+      "name": "La Tanière du Dragon",
+      "coordinate": {
+        "lat": 48.87308,
+        "lon": 2.775918
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 905816849,
+        "name": "La Tanière du Dragon",
+        "score": 1,
+        "distanceM": 11
+      },
+      "nearestEntrance": {
+        "id": 12598937686,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 59,
+        "coordinate": {
+          "lat": 48.8734556,
+          "lon": 2.7753505
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 4
+    },
+    {
+      "id": "ced30c44-9b79-45de-a8c9-6347298756c1",
+      "name": "Le Carrousel de Lancelot",
+      "coordinate": {
+        "lat": 48.873908,
+        "lon": 2.775168
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 302301688,
+        "name": "Le Carrousel de Lancelot",
+        "score": 1,
+        "distanceM": 24
+      },
+      "nearestEntrance": {
+        "id": 12598937686,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 52,
+        "coordinate": {
+          "lat": 48.8734556,
+          "lon": 2.7753505
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 5
+    },
+    {
+      "id": "337bce77-57bd-49c7-83d7-662f16c162ea",
+      "name": "Slinky® Dog Zigzag Spin",
+      "coordinate": {
+        "lat": 48.867136,
+        "lon": 2.776959
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1269081340,
+        "name": "Slinky® Dog Zigzag Spin",
+        "score": 1,
+        "distanceM": 16
+      },
+      "nearestEntrance": {
+        "id": 2714344904,
+        "name": null,
+        "tag": "main",
+        "distanceM": 1,
+        "coordinate": {
+          "lat": 48.8671361,
+          "lon": 2.7769737
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "594dabd8-ddc1-4835-aafa-f654e10ed2db",
+      "name": "Les Voyages de Pinocchio",
+      "coordinate": {
+        "lat": 48.873545,
+        "lon": 2.775157
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1267201556,
+        "name": "Les Voyages de Pinocchio",
+        "score": 1,
+        "distanceM": 22
+      },
+      "nearestEntrance": {
+        "id": 12598937686,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 17,
+        "coordinate": {
+          "lat": 48.8734556,
+          "lon": 2.7753505
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 6
+    },
+    {
+      "id": "f0525c25-4ea2-49b7-aab5-150b27658fb6",
+      "name": "Orbitron®",
+      "coordinate": {
+        "lat": 48.873486,
+        "lon": 2.778457
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 296573532,
+        "name": "Orbitron",
+        "score": 1,
+        "distanceM": 10
+      },
+      "nearestEntrance": {
+        "id": 2142295160,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 28,
+        "coordinate": {
+          "lat": 48.873368,
+          "lon": 2.7788
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "7c5b2c2d-1082-4e5c-b155-dc492db16e6e",
+      "name": "Peter Pan's Flight",
+      "coordinate": {
+        "lat": 48.873838,
+        "lon": 2.77408
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1356532182,
+        "name": "Peter Pan's Flight",
+        "score": 1,
+        "distanceM": 25
+      },
+      "nearestEntrance": {
+        "id": 3451291191,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 63,
+        "coordinate": {
+          "lat": 48.8734776,
+          "lon": 2.7734159
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 2
+    },
+    {
+      "id": "14f756d6-d6fa-4200-8b41-db84ba294fa6",
+      "name": "Phantom Manor",
+      "coordinate": {
+        "lat": 48.870977,
+        "lon": 2.776827
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1223755258,
+        "name": "Phantom Manor",
+        "score": 1,
+        "distanceM": 77
+      },
+      "nearestEntrance": {
+        "id": 11310137216,
+        "name": "Disney Premier Access",
+        "tag": "yes",
+        "distanceM": 22,
+        "coordinate": {
+          "lat": 48.8707801,
+          "lon": 2.7768378
+        }
+      },
+      "entranceOnMatchedWay": {
+        "id": 5754835651,
+        "name": null,
+        "tag": "service",
+        "coordinate": {
+          "lat": 48.8701463,
+          "lon": 2.776774
+        }
+      },
+      "entranceConfidence": "strong",
+      "nearestWalkGraphM": 2
+    },
+    {
+      "id": "bcc5567f-f00b-4a7d-8ee6-526cc8d3d5de",
+      "name": "Mad Hatter's Tea Cups",
+      "coordinate": {
+        "lat": 48.874365,
+        "lon": 2.775025
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 78038415,
+        "name": "Mad Hatter's Tea Cups",
+        "score": 1,
+        "distanceM": 11
+      },
+      "nearestEntrance": {
+        "id": 3112927788,
+        "name": null,
+        "tag": "main",
+        "distanceM": 57,
+        "coordinate": {
+          "lat": 48.8747518,
+          "lon": 2.7755451
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "d6c61231-8f9b-40fa-943a-fe1454e185e7",
+      "name": "Main Street Vehicles",
+      "coordinate": {
+        "lat": 48.871327,
+        "lon": 2.778946
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 2999825244,
+        "name": "Main Street Vehicles",
+        "score": 1,
+        "distanceM": 59
+      },
+      "nearestEntrance": {
+        "id": 12544309280,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 76,
+        "coordinate": {
+          "lat": 48.8710789,
+          "lon": 2.7779802
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 4
+    },
+    {
+      "id": "76e9e917-fe07-49d5-b604-f65d831210fa",
+      "name": "Pirate Galleon",
+      "coordinate": {
+        "lat": 48.872927,
+        "lon": 2.773621
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 54032696,
+        "name": "Pirate Galleon",
+        "score": 1,
+        "distanceM": 9
+      },
+      "nearestEntrance": {
+        "id": 2389965017,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 50,
+        "coordinate": {
+          "lat": 48.8733742,
+          "lon": 2.7735237
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 0
+    },
+    {
+      "id": "0d822af0-bf02-47a7-bc29-672d2fa4f7ab",
+      "name": "Pirates of the Caribbean",
+      "coordinate": {
+        "lat": 48.873493,
+        "lon": 2.773381
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 555005100,
+        "name": "Pirates of the Caribbean",
+        "score": 1,
+        "distanceM": 74
+      },
+      "nearestEntrance": {
+        "id": 3451291191,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 3,
+        "coordinate": {
+          "lat": 48.8734776,
+          "lon": 2.7734159
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "ddca340c-7ba1-4f23-89eb-0d3d52c84bda",
+      "name": "Star Wars Hyperspace Mountain",
+      "coordinate": {
+        "lat": 48.873651,
+        "lon": 2.778863
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 11251453535,
+        "name": "Star Wars Hyperspace Mountain",
+        "score": 1,
+        "distanceM": 56
+      },
+      "nearestEntrance": {
+        "id": 3005190370,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 31,
+        "coordinate": {
+          "lat": 48.8733766,
+          "lon": 2.7788232
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 2
+    },
+    {
+      "id": "2aa73e46-8dcf-4201-b334-db31e6e6ca06",
+      "name": "Pirates' Beach",
+      "coordinate": {
+        "lat": 48.87274,
+        "lon": 2.773771
+      },
+      "osmMatch": null,
+      "nearestEntrance": {
+        "id": 11551971741,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 31,
+        "coordinate": {
+          "lat": 48.8724676,
+          "lon": 2.7738387
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 4
+    },
+    {
+      "id": "bcbd2214-0f75-4cae-8cff-087adf621330",
+      "name": "Rustler Roundup Shootin' Gallery",
+      "coordinate": {
+        "lat": 48.871546,
+        "lon": 2.775611
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1224807682,
+        "name": "Rustler Roundup Shootin' Gallery",
+        "score": 1,
+        "distanceM": 8
+      },
+      "nearestEntrance": {
+        "id": 11806897450,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 32,
+        "coordinate": {
+          "lat": 48.8715793,
+          "lon": 2.7751827
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 10
+    },
+    {
+      "id": "323bec06-fef7-4a60-989d-e3fcf9d3db7e",
+      "name": "Thunder Mesa Riverboat Landing",
+      "coordinate": {
+        "lat": 48.871173,
+        "lon": 2.776563
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1224802967,
+        "name": "Thunder Mesa Riverboat Landing",
+        "score": 1,
+        "distanceM": 11
+      },
+      "nearestEntrance": {
+        "id": 11350862422,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 13,
+        "coordinate": {
+          "lat": 48.8712704,
+          "lon": 2.776665
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "f0d4b531-e291-471b-9527-00410c2bbd65",
+      "name": "Crush's Coaster",
+      "coordinate": {
+        "lat": 48.868041,
+        "lon": 2.778142
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 11263162318,
+        "name": "Crush's Coaster",
+        "score": 1,
+        "distanceM": 20
+      },
+      "nearestEntrance": {
+        "id": 11241819510,
+        "name": null,
+        "tag": "main",
+        "distanceM": 80,
+        "coordinate": {
+          "lat": 48.8682393,
+          "lon": 2.7770857
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 2
+    },
+    {
+      "id": "15bad9c3-8378-4ac5-ab90-2f8d0ee09d26",
+      "name": "RC Racer",
+      "coordinate": {
+        "lat": 48.866903,
+        "lon": 2.776651
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 51547889,
+        "name": "RC Racer",
+        "score": 1,
+        "distanceM": 19
+      },
+      "nearestEntrance": {
+        "id": 2521623935,
+        "name": null,
+        "tag": "main",
+        "distanceM": 9,
+        "coordinate": {
+          "lat": 48.866913,
+          "lon": 2.7765259
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "d944b02c-12ce-4176-ac62-6a936f180b5c",
+      "name": "Cars Quatre Roues Rallye",
+      "coordinate": {
+        "lat": 48.867726,
+        "lon": 2.777854
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 52027319,
+        "name": "Cars Quatre Roues Rallye",
+        "score": 1,
+        "distanceM": 14
+      },
+      "nearestEntrance": {
+        "id": 11787106244,
+        "name": null,
+        "tag": "service",
+        "distanceM": 61,
+        "coordinate": {
+          "lat": 48.867538,
+          "lon": 2.7770685
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "8e229723-51c1-4668-b956-5bc45305acd9",
+      "name": "Les Tapis Volants - Flying Carpets Over Agrabah®",
+      "coordinate": {
+        "lat": 48.868288,
+        "lon": 2.778352
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 11276030959,
+        "name": "Les Tapis Volants - Flying Carpets Over Agrabah®",
+        "score": 1,
+        "distanceM": 1
+      },
+      "nearestEntrance": {
+        "id": 11241819510,
+        "name": null,
+        "tag": "main",
+        "distanceM": 93,
+        "coordinate": {
+          "lat": 48.8682393,
+          "lon": 2.7770857
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 9
+    },
+    {
+      "id": "a10b25e2-3176-449a-a8a5-4119902887bb",
+      "name": "Toy Soldiers Parachute Drop",
+      "coordinate": {
+        "lat": 48.867188,
+        "lon": 2.777234
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1271483949,
+        "name": "Toy Soldiers Parachute Drop",
+        "score": 1,
+        "distanceM": 15
+      },
+      "nearestEntrance": {
+        "id": 2714344904,
+        "name": null,
+        "tag": "main",
+        "distanceM": 20,
+        "coordinate": {
+          "lat": 48.8671361,
+          "lon": 2.7769737
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "07782089-5e83-4bee-8a39-735818551844",
+      "name": "Le Passage Enchanté d'Aladdin",
+      "coordinate": {
+        "lat": 48.872441,
+        "lon": 2.775416
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1234456621,
+        "name": "Le Passage Enchanté d'Aladdin",
+        "score": 1,
+        "distanceM": 6
+      },
+      "nearestEntrance": {
+        "id": 11528504398,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 27,
+        "coordinate": {
+          "lat": 48.8726606,
+          "lon": 2.7752742
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 4
+    },
+    {
+      "id": "630e2675-f9fc-4984-ba83-03daf5fc89ed",
+      "name": "Frozen Ever After",
+      "coordinate": {
+        "lat": 48.864108,
+        "lon": 2.773508
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1086799532,
+        "name": "Frozen Ever After",
+        "score": 1,
+        "distanceM": 42
+      },
+      "nearestEntrance": {
+        "id": 13525630201,
+        "name": "Disney Premier Acces",
+        "tag": "main",
+        "distanceM": 1,
+        "coordinate": {
+          "lat": 48.8641004,
+          "lon": 2.7735082
+        }
+      },
+      "entranceOnMatchedWay": {
+        "id": 13525630201,
+        "name": "Disney Premier Acces",
+        "tag": "main",
+        "coordinate": {
+          "lat": 48.8641004,
+          "lon": 2.7735082
+        }
+      },
+      "entranceConfidence": "strong",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "0d9296c0-a76c-4578-b0f9-2ff4b4e385b5",
+      "name": "Disneyland Railroad Main Street Station",
+      "coordinate": {
+        "lat": 48.870821,
+        "lon": 2.779071
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 258856843,
+        "name": "Disneyland Railroad Main Street Station",
+        "score": 1,
+        "distanceM": 5
+      },
+      "nearestEntrance": {
+        "id": 5450056707,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 52,
+        "coordinate": {
+          "lat": 48.8703633,
+          "lon": 2.7789386
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 7
+    },
+    {
+      "id": "3a1cd3f7-9c42-4f9b-90fa-dab7ba113862",
+      "name": "Autopia, presented by Avis",
+      "coordinate": {
+        "lat": 48.873417,
+        "lon": 2.778797
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 204210418,
+        "name": "Autopia",
+        "score": 0.9,
+        "distanceM": 22
+      },
+      "nearestEntrance": {
+        "id": 3005190370,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 5,
+        "coordinate": {
+          "lat": 48.8733766,
+          "lon": 2.7788232
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "9056906c-0030-4951-be5e-44ac1f273491",
+      "name": "Le Pays des Contes de Fées, presented by Vittel",
+      "coordinate": {
+        "lat": 48.87519,
+        "lon": 2.774483
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 1012678087,
+        "name": "Le Pays des Contes de Fées, présenté par Vittel",
+        "score": 1,
+        "distanceM": 23
+      },
+      "nearestEntrance": {
+        "id": 13474532807,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 14,
+        "coordinate": {
+          "lat": 48.8751669,
+          "lon": 2.7742984
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "351af0dc-cd77-45f5-b6c2-a59e871b5a43",
+      "name": "Disneyland Railroad Discoveryland Station",
+      "coordinate": {
+        "lat": 48.874733,
+        "lon": 2.778446
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 258856876,
+        "name": "Disneyland Railroad Discoveryland Station",
+        "score": 1,
+        "distanceM": 71
+      },
+      "nearestEntrance": {
+        "id": 3014457251,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 28,
+        "coordinate": {
+          "lat": 48.8746143,
+          "lon": 2.7787842
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "0216ad22-bada-4303-9635-d7350a942fbc",
+      "name": "Disneyland Railroad Fantasyland Station",
+      "coordinate": {
+        "lat": 48.874647,
+        "lon": 2.773755
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 258856870,
+        "name": "Disneyland Railroad Fantasyland Station",
+        "score": 1,
+        "distanceM": 14
+      },
+      "nearestEntrance": {
+        "id": 10891931089,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 65,
+        "coordinate": {
+          "lat": 48.8751626,
+          "lon": 2.7741782
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "852d957c-382e-4afb-bb74-70c9a79055df",
+      "name": "Big Thunder Mountain",
+      "coordinate": {
+        "lat": 48.871528,
+        "lon": 2.774787
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 1011446599,
+        "name": "Big Thunder Mountain",
+        "score": 1,
+        "distanceM": 35
+      },
+      "nearestEntrance": {
+        "id": 11349092802,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 2,
+        "coordinate": {
+          "lat": 48.871547,
+          "lon": 2.774804
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 2
+    },
+    {
+      "id": "ce87a0fe-c644-475e-abb6-9727e05cebff",
+      "name": "\"it's a small world\"",
+      "coordinate": {
+        "lat": 48.87469,
+        "lon": 2.776084
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 11308499084,
+        "name": "\"it's a small world\"",
+        "score": 1,
+        "distanceM": 18
+      },
+      "nearestEntrance": {
+        "id": 3112927788,
+        "name": null,
+        "tag": "main",
+        "distanceM": 40,
+        "coordinate": {
+          "lat": 48.8747518,
+          "lon": 2.7755451
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "5d10b8b2-7d34-4794-8857-76688e5864bc",
+      "name": "Star Tours: The Adventures Continue*",
+      "coordinate": {
+        "lat": 48.874677,
+        "lon": 2.778782
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 11309964890,
+        "name": "Star Tours : L'Aventure Continue",
+        "score": 1,
+        "distanceM": 33
+      },
+      "nearestEntrance": {
+        "id": 3014457251,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 7,
+        "coordinate": {
+          "lat": 48.8746143,
+          "lon": 2.7787842
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "candidate",
+      "nearestWalkGraphM": 0
+    },
+    {
+      "id": "449a20d8-9bfd-4b2b-b437-38a279aa8d88",
+      "name": "Cars ROAD TRIP",
+      "coordinate": {
+        "lat": 48.86651889190989,
+        "lon": 2.775024175643921
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 9418185128,
+        "name": "Cars ROAD TRIP",
+        "score": 1,
+        "distanceM": 18
+      },
+      "nearestEntrance": {
+        "id": 10717557695,
+        "name": null,
+        "tag": "shop",
+        "distanceM": 107,
+        "coordinate": {
+          "lat": 48.8671172,
+          "lon": 2.7761658
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 7
+    },
+    {
+      "id": "d2ec9363-a215-4904-b297-b66734ea9a00",
+      "name": "The Twilight Zone Tower of Terror",
+      "coordinate": {
+        "lat": 48.866753,
+        "lon": 2.778767
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1469626867,
+        "name": "The Twilight Zone Tower of Terror",
+        "score": 1,
+        "distanceM": 38
+      },
+      "nearestEntrance": {
+        "id": 13519285868,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 27,
+        "coordinate": {
+          "lat": 48.8667915,
+          "lon": 2.778406
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "f710814b-232d-4469-aad7-d98b328a15b7",
+      "name": "Spider-Man W.E.B. Adventure",
+      "coordinate": {
+        "lat": 48.86611484299536,
+        "lon": 2.779369354248047
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1271516013,
+        "name": "Spider-Man W.E.B. Adventure",
+        "score": 1,
+        "distanceM": 27
+      },
+      "nearestEntrance": {
+        "id": 10709327018,
+        "name": null,
+        "tag": "restaurant",
+        "distanceM": 27,
+        "coordinate": {
+          "lat": 48.8659638,
+          "lon": 2.7796567
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "nearby",
+      "nearestWalkGraphM": 15
+    },
+    {
+      "id": "25556e4e-aa6c-41ff-b196-29967362345e",
+      "name": "Raiponce Tangled Spin",
+      "coordinate": {
+        "lat": 48.866153,
+        "lon": 2.77663
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1338725879,
+        "name": "Raiponce Tangled Spin",
+        "score": 1,
+        "distanceM": 18
+      },
+      "nearestEntrance": {
+        "id": 2521623945,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 79,
+        "coordinate": {
+          "lat": 48.8668625,
+          "lon": 2.7765072
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 9
+    },
+    {
+      "id": "73e1c590-ef8f-496c-bf6c-d7e7fde0c7df",
+      "name": "Ratatouille : L’Aventure Totalement Toquée de Rémy​",
+      "coordinate": {
+        "lat": 48.86757046243673,
+        "lon": 2.7762224525213237
+      },
+      "osmMatch": {
+        "type": "way",
+        "id": 1269073076,
+        "name": "Ratatouille : L'Aventure totalement toquée de Rémy",
+        "score": 1,
+        "distanceM": 58
+      },
+      "nearestEntrance": {
+        "id": 2893798830,
+        "name": null,
+        "tag": "main",
+        "distanceM": 2,
+        "coordinate": {
+          "lat": 48.8675502,
+          "lon": 2.7762113
+        }
+      },
+      "entranceOnMatchedWay": {
+        "id": 2893798826,
+        "name": null,
+        "tag": "main",
+        "coordinate": {
+          "lat": 48.8675471,
+          "lon": 2.7762408
+        }
+      },
+      "entranceConfidence": "strong",
+      "nearestWalkGraphM": 2
+    },
+    {
+      "id": "a970c245-4924-48bd-bced-efc14850b116",
+      "name": "Mickey’s PhilharMagic",
+      "coordinate": {
+        "lat": 48.87445952598315,
+        "lon": 2.7798494696617126
+      },
+      "osmMatch": {
+        "type": "node",
+        "id": 5041144695,
+        "name": "Mickey's PhilharMagic",
+        "score": 1,
+        "distanceM": 3
+      },
+      "nearestEntrance": {
+        "id": 3014457251,
+        "name": null,
+        "tag": "yes",
+        "distanceM": 80,
+        "coordinate": {
+          "lat": 48.8746143,
+          "lon": 2.7787842
+        }
+      },
+      "entranceOnMatchedWay": null,
+      "entranceConfidence": "none",
+      "nearestWalkGraphM": 8
+    }
+  ],
+  "dining": [
+    {
+      "id": "98e16089-4a95-4565-830a-faf5f730272d",
+      "name": "Restaurant Hakuna Matata",
+      "coordinate": {
+        "lat": 48.87206,
+        "lon": 2.774473
+      },
+      "osmMatch": {
+        "id": 1226302857,
+        "name": "Restaurant Hakuna Matata",
+        "score": 1,
+        "distanceM": 15
+      },
+      "nearestEntranceM": 46,
+      "nearestWalkGraphM": 6
+    },
+    {
+      "id": "ef54a7f3-8276-4879-a431-0b9f9219ac78",
+      "name": "Cool Station",
+      "coordinate": {
+        "lat": 48.87327,
+        "lon": 2.7781
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 52,
+      "nearestWalkGraphM": 10
+    },
+    {
+      "id": "5b3c8ce8-e773-4f4c-a508-cadde75188ce",
+      "name": "Market House Deli",
+      "coordinate": {
+        "lat": 48.871782,
+        "lon": 2.778021
+      },
+      "osmMatch": {
+        "id": 1355436991,
+        "name": "Market House Deli",
+        "score": 1,
+        "distanceM": 14
+      },
+      "nearestEntranceM": 78,
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "5b492a0f-7c9f-4c82-b6dc-4d1be20f7b1e",
+      "name": "Plaza Gardens Restaurant",
+      "coordinate": {
+        "lat": 48.872605,
+        "lon": 2.77778
+      },
+      "osmMatch": {
+        "id": 1359114709,
+        "name": "Plaza Gardens Restaurant",
+        "score": 1,
+        "distanceM": 25
+      },
+      "nearestEntranceM": 113,
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "4a0db383-6bb7-49e2-bc1e-06997e65325f",
+      "name": "Pizzeria Bella Notte",
+      "coordinate": {
+        "lat": 48.874315,
+        "lon": 2.776468
+      },
+      "osmMatch": {
+        "id": 1359852385,
+        "name": "Pizzeria Bella Notte",
+        "score": 1,
+        "distanceM": 19
+      },
+      "nearestEntranceM": 83,
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "5bd7aa6a-69f5-443a-8c8a-e007678336d8",
+      "name": "L'Arbre Enchanté",
+      "coordinate": {
+        "lat": 48.874138,
+        "lon": 2.775522
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 68,
+      "nearestWalkGraphM": 5
+    },
+    {
+      "id": "e9124220-9699-4014-8e65-06cad9814a5b",
+      "name": "Au Chalet de la Marionnette",
+      "coordinate": {
+        "lat": 48.873528,
+        "lon": 2.774677
+      },
+      "osmMatch": {
+        "id": 1267201550,
+        "name": "Au Chalet de la Marionnette",
+        "score": 1,
+        "distanceM": 24
+      },
+      "nearestEntranceM": 50,
+      "nearestWalkGraphM": 4
+    },
+    {
+      "id": "616bc6d6-5a14-4d39-90c3-88f6d61e5fd6",
+      "name": "Auberge de Cendrillon",
+      "coordinate": {
+        "lat": 48.8736571395232,
+        "lon": 2.775783576071262
+      },
+      "osmMatch": {
+        "id": 1359847732,
+        "name": "Auberge de Cendrillon",
+        "score": 1,
+        "distanceM": 20
+      },
+      "nearestEntranceM": 39,
+      "nearestWalkGraphM": 9
+    },
+    {
+      "id": "c7773e1f-c75d-4ab8-b6e6-a797abfa82d9",
+      "name": "March Hare Refreshments",
+      "coordinate": {
+        "lat": 48.874474,
+        "lon": 2.77489
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 57,
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "290f42d3-46bd-4cd1-b69d-891788b0afdb",
+      "name": "Speciality Ice Cream",
+      "coordinate": {
+        "lat": 48.867123,
+        "lon": 2.778548
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 38,
+      "nearestWalkGraphM": 27
+    },
+    {
+      "id": "04123960-2968-4bea-ac47-c9aeba4ed581",
+      "name": "The Lucky Nugget Saloon",
+      "coordinate": {
+        "lat": 48.871646,
+        "lon": 2.776365
+      },
+      "osmMatch": {
+        "id": 1223755262,
+        "name": "The Lucky Nugget Saloon",
+        "score": 1,
+        "distanceM": 28
+      },
+      "nearestEntranceM": 4,
+      "nearestWalkGraphM": 2
+    },
+    {
+      "id": "222aa656-ac33-457c-8193-7c625949f40e",
+      "name": "Silver Spur Steakhouse",
+      "coordinate": {
+        "lat": 48.871262,
+        "lon": 2.776632
+      },
+      "osmMatch": {
+        "id": 1223755263,
+        "name": "Silver Spur Steakhouse",
+        "score": 1,
+        "distanceM": 29
+      },
+      "nearestEntranceM": 3,
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "7dae6b67-0da8-4cb6-8e6e-fb2c2f262a4d",
+      "name": "Stark Factory",
+      "coordinate": {
+        "lat": 48.8656667,
+        "lon": 2.7800833333333332
+      },
+      "osmMatch": {
+        "id": 1271516006,
+        "name": "Stark Factory",
+        "score": 1,
+        "distanceM": 4
+      },
+      "nearestEntranceM": 19,
+      "nearestWalkGraphM": 19
+    },
+    {
+      "id": "ff75413f-edee-4f9c-a9e8-0da580d127e2",
+      "name": "The Regal View Restaurant",
+      "coordinate": {
+        "lat": 48.8659,
+        "lon": 2.776125
+      },
+      "osmMatch": {
+        "id": 1094521916,
+        "name": "The Regal View Restaurant & Lounge",
+        "score": 0.9,
+        "distanceM": 42
+      },
+      "nearestEntranceM": 111,
+      "nearestWalkGraphM": 6
+    },
+    {
+      "id": "69ab4a1d-725e-4bdc-8284-7c076001b523",
+      "name": "Rocket Café",
+      "coordinate": {
+        "lat": 48.87435811100483,
+        "lon": 2.7796104146805023
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 67,
+      "nearestWalkGraphM": 10
+    },
+    {
+      "id": "2060c5ac-2ca2-48d0-9772-8f1b5fd3a702",
+      "name": "Critter Corral",
+      "coordinate": {
+        "lat": 48.870677,
+        "lon": 2.7722850000000108
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 49,
+      "nearestWalkGraphM": 10
+    },
+    {
+      "id": "ee25803b-51b1-4c67-86c3-eb4121c2ca8c",
+      "name": "Overland Trail Cafe",
+      "coordinate": {
+        "lat": 48.87168,
+        "lon": 2.774965
+      },
+      "osmMatch": {
+        "id": 1379850346,
+        "name": "Overland Trail Cafe",
+        "score": 1,
+        "distanceM": 2
+      },
+      "nearestEntranceM": 18,
+      "nearestWalkGraphM": 7
+    },
+    {
+      "id": "678d76cf-6b24-40ec-a536-26c3667745e8",
+      "name": "The Ice Cream Company",
+      "coordinate": {
+        "lat": 48.871845,
+        "lon": 2.778292
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 88,
+      "nearestWalkGraphM": 0
+    },
+    {
+      "id": "4459f001-9dfe-4ddc-844a-6ae0e7bc36d5",
+      "name": "The Old Mill",
+      "coordinate": {
+        "lat": 48.874859,
+        "lon": 2.775106
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 34,
+      "nearestWalkGraphM": 14
+    },
+    {
+      "id": "80283731-cd16-42fe-860e-28c70de9e59c",
+      "name": "Super Diner",
+      "coordinate": {
+        "lat": 48.86589278028716,
+        "lon": 2.778520018942506
+      },
+      "osmMatch": {
+        "id": 49736351,
+        "name": "Super Diner",
+        "score": 1,
+        "distanceM": 6
+      },
+      "nearestEntranceM": 70,
+      "nearestWalkGraphM": 5
+    },
+    {
+      "id": "460759ef-bceb-4e07-bdaa-7d1ab81e1413",
+      "name": "WEB Food Truck",
+      "coordinate": {
+        "lat": 48.86552376119522,
+        "lon": 2.778975069522857
+      },
+      "osmMatch": {
+        "id": 1150670989,
+        "name": "WEB Food Truck",
+        "score": 1,
+        "distanceM": 4
+      },
+      "nearestEntranceM": 18,
+      "nearestWalkGraphM": 11
+    },
+    {
+      "id": "2d2e9053-4eba-4d44-a343-f88570c0513f",
+      "name": "Ice Cream Creations",
+      "coordinate": {
+        "lat": 48.867224,
+        "lon": 2.779329
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 17,
+      "nearestWalkGraphM": 7
+    },
+    {
+      "id": "3a91b818-cb5f-4900-b93e-c67e25f5956d",
+      "name": "Agrabah Café Restaurant",
+      "coordinate": {
+        "lat": 48.87277,
+        "lon": 2.775236
+      },
+      "osmMatch": {
+        "id": 1240805707,
+        "name": "Agrabah Café Restaurant",
+        "score": 1,
+        "distanceM": 7
+      },
+      "nearestEntranceM": 12,
+      "nearestWalkGraphM": 11
+    },
+    {
+      "id": "e7e211f7-c1c5-466b-934a-d9891ba6547e",
+      "name": "Character Dining at Plaza Gardens Restaurant",
+      "coordinate": {
+        "lat": 48.872605,
+        "lon": 2.778027
+      },
+      "osmMatch": {
+        "id": 1359114709,
+        "name": "Plaza Gardens Restaurant",
+        "score": 0.9,
+        "distanceM": 7
+      },
+      "nearestEntranceM": 102,
+      "nearestWalkGraphM": 17
+    },
+    {
+      "id": "f47b8d8b-a5a7-4f8c-a1ef-759621a5ee81",
+      "name": "Victoria’s Home-Style Restaurant",
+      "coordinate": {
+        "lat": 48.872234,
+        "lon": 2.777902
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 126,
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "ac95f062-776b-48d9-bc77-869a9307dac7",
+      "name": "Last Chance Cafe",
+      "coordinate": {
+        "lat": 48.871533,
+        "lon": 2.776634
+      },
+      "osmMatch": {
+        "id": 1223755264,
+        "name": "Last Chance Cafe",
+        "score": 1,
+        "distanceM": 13
+      },
+      "nearestEntranceM": 20,
+      "nearestWalkGraphM": 8
+    },
+    {
+      "id": "c8e304bd-876d-46e2-a412-7f8bc1e73a09",
+      "name": "Colonel Hathi’s Outpost Restaurant",
+      "coordinate": {
+        "lat": 48.87174,
+        "lon": 2.773429
+      },
+      "osmMatch": {
+        "id": 1228047092,
+        "name": "Colonel Hathi’s Outpost Restaurant",
+        "score": 1,
+        "distanceM": 20
+      },
+      "nearestEntranceM": 62,
+      "nearestWalkGraphM": 5
+    },
+    {
+      "id": "d0f981f2-9813-45a4-a623-a34380247b62",
+      "name": "Toad Hall Restaurant",
+      "coordinate": {
+        "lat": 48.874154,
+        "lon": 2.773769
+      },
+      "osmMatch": {
+        "id": 1237114456,
+        "name": "Toad Hall Restaurant",
+        "score": 1,
+        "distanceM": 9
+      },
+      "nearestEntranceM": 66,
+      "nearestWalkGraphM": 18
+    },
+    {
+      "id": "b346283b-5b8a-4d9f-b0ae-445ad2a13853",
+      "name": "Café Luminosity",
+      "coordinate": {
+        "lat": 48.865352,
+        "lon": 2.776632
+      },
+      "osmMatch": {
+        "id": 1338725880,
+        "name": "Café Luminosity",
+        "score": 1,
+        "distanceM": 19
+      },
+      "nearestEntranceM": 168,
+      "nearestWalkGraphM": 4
+    },
+    {
+      "id": "37588b4a-f847-4fb1-a6c0-6fabd2aa5cba",
+      "name": "The Regal View Lounge",
+      "coordinate": {
+        "lat": 48.865837,
+        "lon": 2.775951
+      },
+      "osmMatch": {
+        "id": 1094521916,
+        "name": "The Regal View Restaurant & Lounge",
+        "score": 0.8,
+        "distanceM": 32
+      },
+      "nearestEntranceM": 121,
+      "nearestWalkGraphM": 18
+    },
+    {
+      "id": "9ee859db-2623-4ba3-8b40-ef32972cb8ee",
+      "name": "Nordic Crowns Tavern",
+      "coordinate": {
+        "lat": 48.864162,
+        "lon": 2.773907
+      },
+      "osmMatch": {
+        "id": 1294768018,
+        "name": "Nordic Crowns Tavern",
+        "score": 1,
+        "distanceM": 21
+      },
+      "nearestEntranceM": 30,
+      "nearestWalkGraphM": 15
+    },
+    {
+      "id": "fc6dcafb-0ca7-42eb-9da8-ca6efd3c3806",
+      "name": "La Terrasse Panoramique",
+      "coordinate": {
+        "lat": 48.865765,
+        "lon": 2.773667
+      },
+      "osmMatch": {
+        "id": 1343552235,
+        "name": "La Terrasse Panoramique",
+        "score": 1,
+        "distanceM": 12
+      },
+      "nearestEntranceM": 169,
+      "nearestWalkGraphM": 12
+    },
+    {
+      "id": "5f492609-5f79-4ca2-a3ca-39cdd0438739",
+      "name": "PYM Kitchen",
+      "coordinate": {
+        "lat": 48.866,
+        "lon": 2.7796389
+      },
+      "osmMatch": {
+        "id": 1271516007,
+        "name": "PYM Kitchen",
+        "score": 1,
+        "distanceM": 30
+      },
+      "nearestEntranceM": 4,
+      "nearestWalkGraphM": 4
+    },
+    {
+      "id": "d5c26c67-691b-4250-985f-fdda5e5ac233",
+      "name": "Casey’s Corner",
+      "coordinate": {
+        "lat": 48.871983,
+        "lon": 2.777476
+      },
+      "osmMatch": {
+        "id": 1355437017,
+        "name": "Casey's Corner",
+        "score": 1,
+        "distanceM": 15
+      },
+      "nearestEntranceM": 85,
+      "nearestWalkGraphM": 4
+    },
+    {
+      "id": "1c04ec07-13c2-4d83-af15-6d9bac387db1",
+      "name": "Laugh’N' Go!",
+      "coordinate": {
+        "lat": 48.866625,
+        "lon": 2.775209
+      },
+      "osmMatch": {
+        "id": 1151054591,
+        "name": "Kiosque La Vache qui Rit",
+        "score": 0.9,
+        "distanceM": 1
+      },
+      "nearestEntranceM": 89,
+      "nearestWalkGraphM": 10
+    },
+    {
+      "id": "20e0430d-a0d4-4bbf-a5da-b6cff3ffd23a",
+      "name": "Searchlight",
+      "coordinate": {
+        "lat": 48.867534,
+        "lon": 2.779616
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 29,
+      "nearestWalkGraphM": 24
+    },
+    {
+      "id": "2683a803-03c4-48b6-9bbd-a7298400a675",
+      "name": "Café Hyperion",
+      "coordinate": {
+        "lat": 48.874057,
+        "lon": 2.778097
+      },
+      "osmMatch": {
+        "id": 650088652,
+        "name": "Café Hyperion",
+        "score": 1,
+        "distanceM": 21
+      },
+      "nearestEntranceM": 80,
+      "nearestWalkGraphM": 28
+    },
+    {
+      "id": "4b2f71bd-332b-478c-8cd0-8627b3ec13fc",
+      "name": "Cowboy Cookout Barbecue",
+      "coordinate": {
+        "lat": 48.871027,
+        "lon": 2.773392
+      },
+      "osmMatch": {
+        "id": 1226302867,
+        "name": "Cowboy Cookout Barbecue",
+        "score": 1,
+        "distanceM": 29
+      },
+      "nearestEntranceM": 5,
+      "nearestWalkGraphM": 2
+    },
+    {
+      "id": "5ae7196f-3096-478b-b602-b8fe49d964ea",
+      "name": "The Gibson Girl Ice Cream Parlour",
+      "coordinate": {
+        "lat": 48.8721,
+        "lon": 2.77763
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 102,
+      "nearestWalkGraphM": 7
+    },
+    {
+      "id": "dd0f02c0-3714-47e2-b761-086cd752b207",
+      "name": "Café de la Brousse",
+      "coordinate": {
+        "lat": 48.872371,
+        "lon": 2.77452
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 45,
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "6528b0e3-0e49-44f8-a2ca-b135a4d267a4",
+      "name": "Bistrot Chez Rémy",
+      "coordinate": {
+        "lat": 48.867463,
+        "lon": 2.775793
+      },
+      "osmMatch": {
+        "id": 395168196,
+        "name": "Bistrot Chez Rémy",
+        "score": 1,
+        "distanceM": 12
+      },
+      "nearestEntranceM": 12,
+      "nearestWalkGraphM": 12
+    },
+    {
+      "id": "d75b7092-0bf9-4a94-bef9-2c9979b8a889",
+      "name": "The Hollywood Gardens Restaurant",
+      "coordinate": {
+        "lat": 48.867756,
+        "lon": 2.779479
+      },
+      "osmMatch": {
+        "id": 1226260299,
+        "name": "Hollywood Gardens Restaurant",
+        "score": 0.9,
+        "distanceM": 1
+      },
+      "nearestEntranceM": 54,
+      "nearestWalkGraphM": 25
+    },
+    {
+      "id": "98e395e6-4a32-4995-98f2-ff766d86c368",
+      "name": "Cable Car Bake Shop",
+      "coordinate": {
+        "lat": 48.871975,
+        "lon": 2.777754
+      },
+      "osmMatch": {
+        "id": 1355437000,
+        "name": "Cable Car Bake Shop",
+        "score": 1,
+        "distanceM": 13
+      },
+      "nearestEntranceM": 101,
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "8598d1c9-9693-4b10-a7a8-50077ba62a3f",
+      "name": "Captain Jack's - Restaurant des Pirates",
+      "coordinate": {
+        "lat": 48.873306,
+        "lon": 2.772994
+      },
+      "osmMatch": {
+        "id": 1243668337,
+        "name": "Captain Jack's - Restaurant des Pirates",
+        "score": 1,
+        "distanceM": 24
+      },
+      "nearestEntranceM": 1,
+      "nearestWalkGraphM": 1
+    },
+    {
+      "id": "b1d843de-80b6-4ee1-bfd4-54d40f6026e7",
+      "name": "Cookie Kitchen",
+      "coordinate": {
+        "lat": 48.871931,
+        "lon": 2.777805
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 96,
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "3954d4fe-3420-4df8-926c-aa2b0cc89853",
+      "name": "Cool Post",
+      "coordinate": {
+        "lat": 48.871928,
+        "lon": 2.773866
+      },
+      "osmMatch": null,
+      "nearestEntranceM": 58,
+      "nearestWalkGraphM": 4
+    },
+    {
+      "id": "e133de74-a086-4991-9ad9-6b72368447bd",
+      "name": "Casa de Coco – Restaurante de Familia",
+      "coordinate": {
+        "lat": 48.871664,
+        "lon": 2.774558
+      },
+      "osmMatch": {
+        "id": 1226302856,
+        "name": "Casa de Coco – Restaurante de Familia",
+        "score": 1,
+        "distanceM": 13
+      },
+      "nearestEntranceM": 6,
+      "nearestWalkGraphM": 6
+    },
+    {
+      "id": "679f0091-d7f9-4b09-85bf-75827abb6219",
+      "name": "FAN-tastic Food Truck",
+      "coordinate": {
+        "lat": 48.86570196868203,
+        "lon": 2.778419852256775
+      },
+      "osmMatch": {
+        "id": 1150670994,
+        "name": "FAN-tastic Food Truck",
+        "score": 1,
+        "distanceM": 9
+      },
+      "nearestEntranceM": 59,
+      "nearestWalkGraphM": 8
+    },
+    {
+      "id": "ca17a056-3f23-41d2-babb-af6b178a9456",
+      "name": "Walt’s – an American restaurant",
+      "coordinate": {
+        "lat": 48.871732,
+        "lon": 2.777713
+      },
+      "osmMatch": {
+        "id": 1355437015,
+        "name": "Walt’s – an American restaurant",
+        "score": 1,
+        "distanceM": 6
+      },
+      "nearestEntranceM": 75,
+      "nearestWalkGraphM": 7
+    },
+    {
+      "id": "47afeb9c-2c88-4c71-bbeb-4aeb19361c04",
+      "name": "Chez Marie",
+      "coordinate": {
+        "lat": 48.866132,
+        "lon": 2.774056
+      },
+      "osmMatch": {
+        "id": 13603285964,
+        "name": "Chez Marie",
+        "score": 1,
+        "distanceM": 7
+      },
+      "nearestEntranceM": 189,
+      "nearestWalkGraphM": 3
+    },
+    {
+      "id": "54b320f7-6063-4738-a92f-166ac1c5c3a4",
+      "name": "Chez Berlioz",
+      "coordinate": {
+        "lat": 48.866209,
+        "lon": 2.774238
+      },
+      "osmMatch": {
+        "id": 13603285965,
+        "name": "Chez Berlioz",
+        "score": 1,
+        "distanceM": 3
+      },
+      "nearestEntranceM": 173,
+      "nearestWalkGraphM": 12
+    },
+    {
+      "id": "2325d6b6-e32a-4fb9-b805-5963b1cbcd64",
+      "name": "Chez Toulouse",
+      "coordinate": {
+        "lat": 48.86628,
+        "lon": 2.774413
+      },
+      "osmMatch": {
+        "id": 13603285966,
+        "name": "Chez Toulouse",
+        "score": 1,
+        "distanceM": 4
+      },
+      "nearestEntranceM": 158,
+      "nearestWalkGraphM": 9
+    }
+  ]
+}
