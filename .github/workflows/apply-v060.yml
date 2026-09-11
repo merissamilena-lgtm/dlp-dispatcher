@@ -1,0 +1,41 @@
+name: Apply DLP Dispatcher v0.6.0
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/apply-v060.mjs'
+      - 'tools/trigger-v060.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply v0.6.0 precision routing patch
+        run: node tools/apply-v060.mjs
+      - name: Validate JavaScript
+        run: |
+          node --check app.js
+          node --check sw.js
+      - name: Verify routing data exists
+        run: |
+          test -s data/routing-graph.json
+          test -s data/routing-locations.json
+      - name: Commit v0.6.0
+        run: |
+          if git diff --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app.js index.html styles.css sw.js README.md
+          git commit -m 'DLP Dispatcher v0.6.0 precision routing test'
+          git push
