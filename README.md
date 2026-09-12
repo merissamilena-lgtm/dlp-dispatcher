@@ -1,8 +1,8 @@
-# DLP Dispatcher v0.8.1
+# DLP Dispatcher v0.8.2
 
 Phone-first Disneyland Paris trip dispatcher for 30 Oct to 2 Nov 2026. It combines live waits, realistic attraction time, stroller-friendly walking, priorities and protected timed commitments so the family gets a useful next move without optimising the fun out of the day.
 
-## v0.8.1 polish pass
+## v0.8.2 polish pass
 - Main **Now** view stays operational: next timed point, top three recommendations, controls and schedule.
 - Full live attraction catalogue moves to a separate **Rides** view.
 - Ride cards can flip to a plain-English description with ride type, intensity, useful motion/theme flags and approximate experience time.
@@ -38,3 +38,9 @@ Push subscriptions and the VAPID private key are stored in Cloudflare Durable Ob
 
 ## Live data
 ThemeParks.wiki remains the primary live feed. Queue-Times.com is used as a secondary cross-check through the Cloudflare Worker. Material status conflicts are excluded and large wait disagreements are penalised rather than silently trusted.
+
+## Deployment note
+The v0.8.2 PWA probes the existing Cloudflare Worker before enabling cloud sync or Web Push controls. If the Worker has not yet been upgraded with the Durable Object / push build, those controls stay safely disabled while all local/offline Dispatcher features continue to work.
+
+## Sticky navigation
+The Now / Rides switcher stays pinned to the top of the viewport while scrolling, so either view is one tap away even deep in the ride list.

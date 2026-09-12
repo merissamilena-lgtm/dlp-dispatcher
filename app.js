@@ -253,6 +253,8 @@
     syncApplying: false,
     syncPushTimer: null,
     syncBusy: false,
+    cloudBackendReady: false,
+    cloudBackendChecked: false,
     settings: Object.assign({
       mode: 'balanced', singleRider: false, parkHop: false, softPlans: false, precisionRouting: true,
       mealBuffer: 15, trainBuffer: 35, walkSpeed: 55, routeFactor: 1.25,
@@ -1041,9 +1043,29 @@
     return state.sync.token;
   }
   function syncKeyPreview(token){return token&&token.length>12?`${token.slice(0,8)}…${token.slice(-5)}`:token||'';}
+  async function probeCloudBackend(){
+    try{
+      const response=await fetch(`${QT_PROXY_BASE}/health`,{cache:'no-store'});
+      const body=response.ok?await response.json():null;
+      const features=Array.isArray(body?.features)?body.features:[];
+      state.cloudBackendReady=!!response.ok&&features.includes('trip-sync')&&features.includes('web-push');
+    }catch{state.cloudBackendReady=false;}
+    state.cloudBackendChecked=true;
+    renderSyncStatus();
+    return state.cloudBackendReady;
+  }
   function renderSyncStatus(message=null,kind=null){
     const status=$('#syncStatus'),keyLine=$('#syncKeyLine'),key=$('#syncKeyPreview'),create=$('#createSyncBtn'),copy=$('#copySyncBtn'),unlink=$('#unlinkSyncBtn');
     if(!status)return;
+    const linkBtn=$('#linkSyncBtn'),linkInput=$('#syncKeyInput');
+    if(state.cloudBackendChecked&&!state.cloudBackendReady){
+      status.className='sync-status warn';
+      status.textContent='Cloud sync code is ready, but the Cloudflare backend upgrade still needs its one-time deployment.';
+      if(create){create.hidden=false;create.disabled=true;}if(copy)copy.hidden=true;if(unlink){unlink.hidden=!state.sync.token;unlink.disabled=false;}
+      if(linkBtn)linkBtn.disabled=true;if(linkInput)linkInput.disabled=true;
+      renderAlertStatus();return;
+    }
+    if(create)create.disabled=false;if(linkBtn)linkBtn.disabled=false;if(linkInput)linkInput.disabled=false;
     const linked=!!state.sync.token;
     if(keyLine)keyLine.hidden=!linked;if(key)key.textContent=linked?syncKeyPreview(state.sync.token):'';
     if(create)create.hidden=linked;if(copy)copy.hidden=!linked;if(unlink)unlink.hidden=!linked;
@@ -1056,6 +1078,7 @@
   }
   function renderAlertStatus(){
     const status=$('#alertStatus'),enable=$('#enableAlertsBtn'),test=$('#testAlertBtn');if(!status)return;
+    if(state.cloudBackendChecked&&!state.cloudBackendReady){status.textContent='Trip alerts are staged, but the Cloudflare push backend is not active yet.';if(enable){enable.textContent='Enable trip alerts';enable.disabled=true;}if(test)test.hidden=true;return;}
     const permission=typeof Notification==='undefined'?'unsupported':Notification.permission;
     if(state.sync.pushEnabled&&permission==='granted'){
       status.textContent='Notifications enabled on this copy.';if(enable){enable.textContent='Alerts enabled';enable.disabled=true;}if(test)test.hidden=false;
@@ -1137,12 +1160,14 @@
     finally{state.syncBusy=false;}
   }
   async function createCloudSync(){
+    if(!state.cloudBackendReady)return toast('Cloud sync backend activation is still pending.');
     ensureSyncToken();
     state.sync.localModifiedAt=Date.now();persistSyncMeta();
     const ok=await cloudPut();if(ok){renderSyncStatus('Cloud sync started. Copy the private key into your other copy of Dispatcher.','ok');toast('Cloud sync started.');}
     return ok;
   }
   async function linkCloudSync(){
+    if(!state.cloudBackendReady)return toast('Cloud sync backend activation is still pending.');
     const input=$('#syncKeyInput'),token=(input?.value||'').trim();
     if(!SYNC_TOKEN_RE.test(token))return toast('That does not look like a Dispatcher sync key.');
     state.sync.token=token;state.sync.revision=0;state.sync.localModifiedAt=0;state.sync.lastSyncedAt=0;state.sync.pushEnabled=false;persistSyncMeta();renderSyncStatus('Checking cloud state…');
@@ -1175,6 +1200,7 @@
   }
   function standalonePwa(){return window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;}
   async function enableTripAlerts(){
+    if(!state.cloudBackendReady)return toast('Trip-alert backend activation is still pending.');
     if(!standalonePwa())return toast('Open the installed Home Screen app to enable iPhone push alerts.');
     if(!('serviceWorker'in navigator)||!('PushManager'in window))return toast('This browser does not support web push.');
     if(!('Notification'in window))return toast('Notifications are not available here.');
@@ -1200,6 +1226,7 @@
     }catch(e){state.sync.pushEnabled=false;persistSyncMeta();renderAlertStatus();toast(e.message||'Could not enable trip alerts.');}
   }
   async function testTripAlert(){
+    if(!state.cloudBackendReady)return toast('Trip-alert backend activation is still pending.');
     if(!state.sync.token||!state.sync.deviceId)return toast('Enable trip alerts first.');
     try{
       const response=await fetch(`${QT_PROXY_BASE}/push/test/${encodeURIComponent(state.sync.token)}/${encodeURIComponent(state.sync.deviceId)}`,{method:'POST'});
@@ -1207,10 +1234,11 @@
       toast('Test alert sent.');
     }catch(e){toast(e.message||'Test alert failed.');}
   }
-  function startCloudSyncLoop(){
+  async function startCloudSyncLoop(){
     renderSyncStatus();
-    if(state.sync.token){cloudPull().then(result=>{if(result?.needsPush)scheduleCloudPush();});}
-    setInterval(()=>{if(state.sync.token&&document.visibilityState==='visible')cloudPull().then(result=>{if(result?.needsPush)scheduleCloudPush();});},CLOUD_SYNC_POLL_MS);
+    await probeCloudBackend();
+    if(state.cloudBackendReady&&state.sync.token){cloudPull().then(result=>{if(result?.needsPush)scheduleCloudPush();});}
+    setInterval(()=>{if(state.cloudBackendReady&&state.sync.token&&document.visibilityState==='visible')cloudPull().then(result=>{if(result?.needsPush)scheduleCloudPush();});},CLOUD_SYNC_POLL_MS);
   }
 
   function syncControls() {
@@ -1369,7 +1397,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.8.1',
+      'DLP DISPATCHER STATUS v0.8.2',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -1398,7 +1426,7 @@
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.8.1 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.8.2 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 
