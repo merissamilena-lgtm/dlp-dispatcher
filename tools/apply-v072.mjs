@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const write=(p,s)=>fs.writeFileSync(p,s);
+let app=read('app.js'),html=read('index.html'),sw=read('sw.js'),readme=read('README.md');
+const bad="$('[data-remove-timed]').forEach";
+const good="$$('[data-remove-timed]').forEach";
+if(!app.includes(bad)) throw new Error('Timed remove selector bug anchor missing');
+app=app.split(bad).join(good);
+app=app.replaceAll('v0.7.1','v0.7.2');
+html=html.replaceAll('v0.7.1','v0.7.2');
+sw=sw.replaceAll('v0.7.1','v0.7.2');
+readme=readme.replaceAll('v0.7.1','v0.7.2');
+write('app.js',app);write('index.html',html);write('sw.js',sw);write('README.md',readme);
+console.log('Applied v0.7.2 selector hotfix.');
