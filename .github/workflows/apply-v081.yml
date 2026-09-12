@@ -36,12 +36,12 @@ jobs:
           ];
           for(const x of required)if(!s.includes(x))throw new Error(`Missing ${x}`);
           const forbidden=[
-            "$('[data-view]').forEach",
-            "$('.ride-row').forEach",
-            "$('[data-unsnooze]').forEach",
-            "$('[data-rider-switch]').forEach"
+            /(^|[^$])\$\('\[data-view\]'\)\.forEach/m,
+            /(^|[^$])\$\('\.ride-row'\)\.forEach/m,
+            /(^|[^$])\$\('\[data-unsnooze\]'\)\.forEach/m,
+            /(^|[^$])\$\('\[data-rider-switch\]'\)\.forEach/m
           ];
-          for(const x of forbidden)if(s.includes(x))throw new Error(`Single-element selector still used as a list: ${x}`);
+          for(const re of forbidden)if(re.test(s))throw new Error(`Single-element selector still used as a list: ${re}`);
           const html=fs.readFileSync('index.html','utf8');
           if(!html.includes('app.js?v=0.8.1')||!html.includes('styles.css?v=0.8.1'))throw new Error('v0.8.1 cache bump missing');
           const sw=fs.readFileSync('sw.js','utf8');
