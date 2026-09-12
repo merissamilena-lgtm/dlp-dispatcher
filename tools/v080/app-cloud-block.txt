@@ -1,0 +1,206 @@
+
+  function syncableSettings(){
+    const {preview,previewDate,previewTime,location,locationSource,...shared}=state.settings;
+    return shared;
+  }
+  function cloudStateData(){
+    return {
+      priorities:state.priorities,
+      done:state.done,
+      notNow:state.notNow,
+      riderSwitch:state.riderSwitch,
+      dynamicCommitments:state.dynamicCommitments,
+      settings:syncableSettings()
+    };
+  }
+  function cloudAlerts(){
+    const now=Date.now();
+    return allCommitments().filter(c=>c.hard).map(c=>{
+      const target=new Date(commitmentDateTime(c).getTime()-bufferFor(c)*60000);
+      return {id:c.id,name:c.name,kind:c.kind||'timed',targetAt:target.toISOString(),targetLabel:parisTime(target),displayTime:commitmentDisplayTime(c),date:c.date};
+    }).filter(a=>Date.parse(a.targetAt)>now-10*60000);
+  }
+  function randomUrlToken(bytes=18){
+    const raw=crypto.getRandomValues(new Uint8Array(bytes));
+    let binary='';for(const b of raw)binary+=String.fromCharCode(b);
+    return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  function ensureSyncToken(){
+    if(state.sync.token)return state.sync.token;
+    state.sync.token=`d1p_${randomUrlToken()}`;
+    state.sync.revision=0;state.sync.localModifiedAt=Date.now();state.sync.lastSyncedAt=0;
+    persistSyncMeta();renderSyncStatus();scheduleCloudPush();
+    return state.sync.token;
+  }
+  function syncKeyPreview(token){return token&&token.length>12?`${token.slice(0,8)}…${token.slice(-5)}`:token||'';}
+  function renderSyncStatus(message=null,kind=null){
+    const status=$('#syncStatus'),keyLine=$('#syncKeyLine'),key=$('#syncKeyPreview'),create=$('#createSyncBtn'),copy=$('#copySyncBtn'),unlink=$('#unlinkSyncBtn');
+    if(!status)return;
+    const linked=!!state.sync.token;
+    if(keyLine)keyLine.hidden=!linked;if(key)key.textContent=linked?syncKeyPreview(state.sync.token):'';
+    if(create)create.hidden=linked;if(copy)copy.hidden=!linked;if(unlink)unlink.hidden=!linked;
+    status.className=`sync-status ${kind||''}`.trim();
+    if(message)status.textContent=message;
+    else if(!linked)status.textContent='Not linked to Cloudflare yet.';
+    else if(state.sync.lastSyncedAt)status.textContent=`Cloud linked · revision ${state.sync.revision} · last synced ${Math.max(0,Math.floor((Date.now()-state.sync.lastSyncedAt)/1000))}s ago`;
+    else status.textContent='Cloud linked · waiting for first sync.';
+    renderAlertStatus();
+  }
+  function renderAlertStatus(){
+    const status=$('#alertStatus'),enable=$('#enableAlertsBtn'),test=$('#testAlertBtn');if(!status)return;
+    const permission=typeof Notification==='undefined'?'unsupported':Notification.permission;
+    if(state.sync.pushEnabled&&permission==='granted'){
+      status.textContent='Notifications enabled on this copy.';if(enable){enable.textContent='Alerts enabled';enable.disabled=true;}if(test)test.hidden=false;
+    }else{
+      status.textContent=permission==='denied'?'Notifications are blocked in iOS settings.':permission==='unsupported'?'Notifications are not supported in this browser.':'Notifications are off.';
+      if(enable){enable.textContent='Enable trip alerts';enable.disabled=permission==='denied'||permission==='unsupported';}if(test)test.hidden=true;
+    }
+  }
+  function applyCloudData(data){
+    if(!data||typeof data!=='object')return;
+    state.syncApplying=true;
+    try{
+      if(data.priorities&&typeof data.priorities==='object')state.priorities=data.priorities;
+      if(data.done&&typeof data.done==='object')state.done=data.done;
+      if(data.notNow&&typeof data.notNow==='object')state.notNow=data.notNow;
+      if(data.riderSwitch&&typeof data.riderSwitch==='object')state.riderSwitch=data.riderSwitch;
+      if(Array.isArray(data.dynamicCommitments))state.dynamicCommitments=data.dynamicCommitments;
+      if(data.settings&&typeof data.settings==='object')state.settings={...state.settings,...data.settings};
+      save({remote:true});
+      renderAll();
+    }finally{state.syncApplying=false;}
+  }
+  function scheduleCloudPush(){
+    if(!state.sync?.token||state.syncApplying)return;
+    clearTimeout(state.syncPushTimer);
+    state.syncPushTimer=setTimeout(()=>cloudPut().catch(()=>{}),650);
+  }
+  async function cloudPut(retry=true){
+    if(!state.sync.token||state.syncBusy)return false;
+    state.syncBusy=true;
+    const payloadModified=Number(state.sync.localModifiedAt||Date.now());
+    const baseRevision=Number(state.sync.revision||0);
+    try{
+      const response=await fetch(`${QT_PROXY_BASE}/sync/${encodeURIComponent(state.sync.token)}`,{
+        method:'PUT',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({baseRevision,updatedAt:payloadModified,data:cloudStateData(),alerts:cloudAlerts()})
+      });
+      const body=await response.json().catch(()=>({}));
+      if(response.status===409&&retry){
+        state.sync.revision=Number(body.revision||0);
+        const remoteUpdated=Number(body.updatedAt||0);
+        if(body.data&&remoteUpdated>Number(state.sync.localModifiedAt||0)){
+          applyCloudData(body.data);state.sync.localModifiedAt=remoteUpdated;state.sync.lastSyncedAt=remoteUpdated;persistSyncMeta();renderSyncStatus('Updated from the newer cloud copy.','ok');return true;
+        }
+        persistSyncMeta();
+        state.syncBusy=false;
+        return cloudPut(false);
+      }
+      if(!response.ok)throw new Error(body.error||`Cloud sync ${response.status}`);
+      state.sync.revision=Number(body.revision||baseRevision+1);
+      state.sync.lastSyncedAt=payloadModified;
+      persistSyncMeta();renderSyncStatus(null,'ok');
+      return true;
+    }catch(e){renderSyncStatus(`Cloud unavailable · local copy is safe (${e.message||e}).`,'warn');return false;}
+    finally{
+      state.syncBusy=false;
+      if(state.sync.token&&Number(state.sync.localModifiedAt||0)>Number(state.sync.lastSyncedAt||0))scheduleCloudPush();
+    }
+  }
+  async function cloudPull({forceRemote=false}={}){
+    if(!state.sync.token||state.syncBusy)return false;
+    state.syncBusy=true;
+    try{
+      const response=await fetch(`${QT_PROXY_BASE}/sync/${encodeURIComponent(state.sync.token)}`,{cache:'no-store'});
+      const body=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(body.error||`Cloud sync ${response.status}`);
+      const remoteRevision=Number(body.revision||0),remoteUpdated=Number(body.updatedAt||0);
+      if(body.data&&(forceRemote||remoteRevision>Number(state.sync.revision||0))){
+        if(forceRemote||remoteUpdated>=Number(state.sync.localModifiedAt||0)){
+          applyCloudData(body.data);state.sync.localModifiedAt=remoteUpdated;state.sync.lastSyncedAt=remoteUpdated;
+        }
+        state.sync.revision=remoteRevision;persistSyncMeta();
+      }else if(!body.data&&forceRemote){
+        state.sync.revision=remoteRevision;state.sync.localModifiedAt=Date.now();persistSyncMeta();
+      }
+      renderSyncStatus(null,'ok');
+      return {body,needsPush:!body.data||Number(state.sync.localModifiedAt||0)>Number(state.sync.lastSyncedAt||0)};
+    }catch(e){renderSyncStatus(`Cloud unavailable · local copy is safe (${e.message||e}).`,'warn');return false;}
+    finally{state.syncBusy=false;}
+  }
+  async function createCloudSync(){
+    ensureSyncToken();
+    state.sync.localModifiedAt=Date.now();persistSyncMeta();
+    const ok=await cloudPut();if(ok){renderSyncStatus('Cloud sync started. Copy the private key into your other copy of Dispatcher.','ok');toast('Cloud sync started.');}
+    return ok;
+  }
+  async function linkCloudSync(){
+    const input=$('#syncKeyInput'),token=(input?.value||'').trim();
+    if(!SYNC_TOKEN_RE.test(token))return toast('That does not look like a Dispatcher sync key.');
+    state.sync.token=token;state.sync.revision=0;state.sync.localModifiedAt=0;state.sync.lastSyncedAt=0;state.sync.pushEnabled=false;persistSyncMeta();renderSyncStatus('Checking cloud state…');
+    const pulled=await cloudPull({forceRemote:true});
+    if(pulled&&pulled.needsPush){state.sync.localModifiedAt=Date.now();persistSyncMeta();await cloudPut();}
+    if(pulled){if(input)input.value='';toast('This copy is linked.');}
+  }
+  async function copySyncKey(){
+    if(!state.sync.token)return;
+    try{await navigator.clipboard.writeText(state.sync.token);toast('Private sync key copied.');}
+    catch{prompt('Copy this private sync key:',state.sync.token);}
+  }
+  async function unlinkCloudSync(){
+    const token=state.sync.token,deviceId=state.sync.deviceId;
+    try{
+      const reg=await navigator.serviceWorker?.ready;
+      const subscription=await reg?.pushManager?.getSubscription();
+      if(subscription)await subscription.unsubscribe();
+      if(token&&deviceId)await fetch(`${QT_PROXY_BASE}/push/unregister/${encodeURIComponent(token)}/${encodeURIComponent(deviceId)}`,{method:'POST'}).catch(()=>{});
+      reg?.active?.postMessage({type:'CLEAR_PUSH_CONTEXT'});
+    }catch{}
+    clearTimeout(state.syncPushTimer);
+    state.sync={token:'',revision:0,localModifiedAt:0,lastSyncedAt:0,pushEnabled:false,deviceId:''};
+    localStorage.removeItem(SYNC_TOKEN_KEY);localStorage.removeItem(PUSH_DEVICE_KEY);localStorage.removeItem(SYNC_META_KEY);
+    renderSyncStatus();toast('This copy is unlinked. Local trip data was kept.');
+  }
+  function base64UrlToBytes(value){
+    const padding='='.repeat((4-value.length%4)%4),base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(base64),out=new Uint8Array(raw.length);
+    for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;
+  }
+  function standalonePwa(){return window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;}
+  async function enableTripAlerts(){
+    if(!standalonePwa())return toast('Open the installed Home Screen app to enable iPhone push alerts.');
+    if(!('serviceWorker'in navigator)||!('PushManager'in window))return toast('This browser does not support web push.');
+    if(!('Notification'in window))return toast('Notifications are not available here.');
+    ensureSyncToken();
+    const permission=await Notification.requestPermission();
+    if(permission!=='granted'){renderAlertStatus();return toast('Notification permission was not granted.');}
+    try{
+      const reg=await navigator.serviceWorker.register('sw.js');
+      await navigator.serviceWorker.ready;
+      const keyResponse=await fetch(`${QT_PROXY_BASE}/push/vapid`,{cache:'no-store'});
+      if(!keyResponse.ok)throw new Error('Cloud push service is not ready');
+      const {publicKey}=await keyResponse.json();
+      let subscription=await reg.pushManager.getSubscription();
+      if(!subscription)subscription=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToBytes(publicKey)});
+      if(!state.sync.deviceId)state.sync.deviceId=`dev_${randomUrlToken(12)}`;
+      const response=await fetch(`${QT_PROXY_BASE}/push/register/${encodeURIComponent(state.sync.token)}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deviceId:state.sync.deviceId,subscription:subscription.toJSON()})
+      });
+      if(!response.ok)throw new Error('Could not register this phone');
+      state.sync.pushEnabled=true;persistSyncMeta();
+      reg.active?.postMessage({type:'SET_PUSH_CONTEXT',context:{syncToken:state.sync.token,deviceId:state.sync.deviceId}});
+      scheduleCloudPush();renderAlertStatus();toast('Trip alerts enabled.');
+    }catch(e){state.sync.pushEnabled=false;persistSyncMeta();renderAlertStatus();toast(e.message||'Could not enable trip alerts.');}
+  }
+  async function testTripAlert(){
+    if(!state.sync.token||!state.sync.deviceId)return toast('Enable trip alerts first.');
+    try{
+      const response=await fetch(`${QT_PROXY_BASE}/push/test/${encodeURIComponent(state.sync.token)}/${encodeURIComponent(state.sync.deviceId)}`,{method:'POST'});
+      if(!response.ok)throw new Error('Test alert could not be sent');
+      toast('Test alert sent.');
+    }catch(e){toast(e.message||'Test alert failed.');}
+  }
+  function startCloudSyncLoop(){
+    renderSyncStatus();
+    if(state.sync.token){cloudPull().then(result=>{if(result?.needsPush)scheduleCloudPush();});}
+    setInterval(()=>{if(state.sync.token&&document.visibilityState==='visible')cloudPull().then(result=>{if(result?.needsPush)scheduleCloudPush();});},CLOUD_SYNC_POLL_MS);
+  }
