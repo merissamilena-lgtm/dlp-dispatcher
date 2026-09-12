@@ -4,7 +4,7 @@ const write=(p,s)=>fs.writeFileSync(p,s);
 const replaceExact=(s,bad,good,label)=>{if(!s.includes(bad))throw new Error(`Missing ${label}`);return s.split(bad).join(good);};
 const insertAfter=(s,anchor,addition,label)=>replaceExact(s,anchor,anchor+addition,label);
 
-let app=read('app.js'),html=read('index.html'),sw=read('sw.js'),readme=read('README.md');
+let app=read('app.js'),html=read('index.html'),styles=read('styles.css'),sw=read('sw.js'),readme=read('README.md');
 
 app=insertAfter(app,
 `    syncBusy: false,\n`,
@@ -48,10 +48,15 @@ app=replaceExact(app,
 `  async function startCloudSyncLoop(){\n    renderSyncStatus();\n    await probeCloudBackend();\n    if(state.cloudBackendReady&&state.sync.token){cloudPull().then(result=>{if(result?.needsPush)scheduleCloudPush();});}\n    setInterval(()=>{if(state.cloudBackendReady&&state.sync.token&&document.visibilityState==='visible')cloudPull().then(result=>{if(result?.needsPush)scheduleCloudPush();});},CLOUD_SYNC_POLL_MS);\n  }\n`,
 'cloud sync loop capability probe');
 
+if(!styles.includes('.view-tabs')) throw new Error('View tabs CSS anchor missing');
+if(styles.includes('/* v0.8.2 sticky view tabs */')) throw new Error('Sticky view tabs already applied');
+styles += `\n\n/* v0.8.2 sticky view tabs */\n.view-tabs{position:sticky;top:env(safe-area-inset-top);z-index:40;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 -4px 16px;padding:8px 4px;background:linear-gradient(180deg,rgba(9,11,18,.97),rgba(9,11,18,.90));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.06)}\n.view-tab{width:100%;padding:10px 14px;border-radius:999px;color:var(--muted);background:rgba(14,19,33,.94);box-shadow:0 6px 18px rgba(0,0,0,.18)}\n.view-tab.active{color:var(--text);border-color:var(--accent);background:rgba(122,162,255,.14);box-shadow:0 0 0 1px rgba(122,162,255,.10),0 6px 18px rgba(0,0,0,.18)}\n@media(max-width:520px){.view-tabs{margin-left:-6px;margin-right:-6px;padding-left:6px;padding-right:6px}}\n`;
+
 app=app.replaceAll('v0.8.1','v0.8.2');
 html=html.replaceAll('v0.8.1','v0.8.2').replaceAll('?v=0.8.1','?v=0.8.2');
 sw=sw.replaceAll('v0.8.1','v0.8.2').replaceAll('?v=0.8.1','?v=0.8.2');
 readme=readme.replaceAll('v0.8.1','v0.8.2');
 if(!readme.includes('## Deployment note'))readme += `\n## Deployment note\nThe v0.8.2 PWA probes the existing Cloudflare Worker before enabling cloud sync or Web Push controls. If the Worker has not yet been upgraded with the Durable Object / push build, those controls stay safely disabled while all local/offline Dispatcher features continue to work.\n`;
-write('app.js',app);write('index.html',html);write('sw.js',sw);write('README.md',readme);
-console.log('Applied DLP Dispatcher v0.8.2 cloud capability guard.');
+if(!readme.includes('## Sticky navigation'))readme += `\n## Sticky navigation\nThe Now / Rides switcher stays pinned to the top of the viewport while scrolling, so either view is one tap away even deep in the ride list.\n`;
+write('app.js',app);write('index.html',html);write('styles.css',styles);write('sw.js',sw);write('README.md',readme);
+console.log('Applied DLP Dispatcher v0.8.2 cloud guard + sticky view tabs.');
