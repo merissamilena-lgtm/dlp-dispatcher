@@ -2,6 +2,17 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "dlp-queue-proxy",
   "main": "src/index.js",
-  "compatibility_date": "2026-09-10",
-  "workers_dev": true
+  "compatibility_date": "2026-09-12",
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [
+      { "name": "TRIP_HUB", "class_name": "TripHub" }
+    ]
+  },
+  "exports": {
+    "TripHub": { "type": "durable-object", "storage": "sqlite" }
+  },
+  "triggers": {
+    "crons": ["* * * * *"]
+  }
 }

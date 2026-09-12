@@ -1,38 +1,40 @@
-# DLP Dispatcher v0.7.2
+# DLP Dispatcher v0.8.0
 
-This build adds TEST packet route-vs-legacy diagnostics to the precision-routing layer while preserving the v0.5.3 scoring and booking safety rules.
+Phone-first Disneyland Paris trip dispatcher for 30 Oct to 2 Nov 2026. It combines live waits, realistic attraction time, stroller-friendly walking, priorities and protected timed commitments so the family gets a useful next move without optimising the fun out of the day.
+
+## v0.8.0 polish pass
+- Main **Now** view stays operational: next timed point, top three recommendations, controls and schedule.
+- Full live attraction catalogue moves to a separate **Rides** view.
+- Ride cards can flip to a plain-English description with ride type, intensity, useful motion/theme flags and approximate experience time.
+- Ride browser gets an explicit **Clear** search control.
+- iPhone time controls get a stricter intrinsic-width override while retaining the normal iOS time picker.
+- The #1 recommendation inherits yellow **GETTING TIGHT** or red **MOVE NOW** emphasis from the protected timed point.
+
+## Rider Switch
+Rider Switch is selected per attraction by the user. When enabled, the timing model adds a second ride experience plus a five-minute handover allowance, but does not invent a second standby queue. This is deliberately a family timing allowance rather than an eligibility claim.
+
+## Timed commitments
+- Premier Access One windows use the end of the entered Disney window as the deadline, with a five-minute arrival buffer.
+- Reserved viewing uses a 20-minute arrival margin.
+- Other hard timed items use a 10-minute margin.
+- Restaurants and train commitments retain their configured buffers.
+- The existing five-minute hard-anchor residual safety rule remains unchanged.
+
+## Cloud sync
+The app remains offline-first in local storage. A user can optionally create a long random private sync key and link Safari plus the installed Home Screen app to the same Cloudflare Durable Object state. Synced state includes priorities, DONE marks, snoozes, Rider Switch selections, dynamic timed items and trip settings. GPS is never synced.
+
+Sync uses monotonically increasing revisions so an older browser copy cannot silently overwrite newer cloud state. The sync key is a bearer secret generated in the browser and is not stored in the public repository.
+
+## Push alerts
+The installed Home Screen PWA can opt in to standards-based Web Push. Cloudflare checks protected timed targets once per minute and sends conservative background nudges at roughly 30, 15 and 5 minutes before the buffered target. Background alerts do not claim to know current GPS position; opening Dispatcher restores the normal GPS-aware walking calculation.
+
+Push subscriptions and the VAPID private key are stored in Cloudflare Durable Object storage, not in the public repository.
 
 ## Precision routing
 - TEST-only feature flag. LIVE recommendations continue to fall back to the proven legacy model.
-- Loads a locally hosted OpenStreetMap pedestrian graph generated for the Disneyland Paris resort.
-- Pushchair profile excludes steps and explicitly private/no-foot routes.
-- Uses curated/strong or candidate queue entrances where public map evidence supports them, otherwise falls back to ThemeParks.wiki attraction coordinates.
-- Routes onward travel from attraction exit data where available, with safe POI fallback.
-- Fixed-point restaurants use attraction-level/entrance-level coordinates instead of land centres where available.
-- Continuous high-accuracy GPS tracking starts in-resort after Use my location; poor fixes are damped.
+- Uses the local stroller/step-free OpenStreetMap graph where available.
+- Curated or candidate attraction entrances are used where public evidence supports them; safe attraction-POI fallbacks remain.
+- The scoring weights and hard-anchor safety thresholds are unchanged from the validated engine.
 
-## Glanceable urgency
-- Green SAFE, yellow GETTING TIGHT / TIGHT FIT, red MOVE NOW.
-- The next-anchor card now reports direct walking time and remaining direct-route slack.
-- Empty recommendation state becomes an explicit MOVE NOW instruction when the family needs to head to the anchor immediately.
-
-## Safety
-Precision routing is deliberately TEST-only until route comparisons are validated. The v0.5.3 hard-anchor residual-slack rule remains intact.
-
-
-## v0.6.1 routing diagnostics
-- TEST packets compare precision stroller-graph walking time with the previous legacy estimate for each top candidate.
-- Reports attraction entrance and exit confidence/source, plus fixed-point entrance confidence.
-- Reports graph snap distance for ride entrance, ride exit and fixed point so weak endpoint geometry is visible during validation.
-- No scoring weights or hard-anchor safety thresholds changed.
-
-
-## Timed commitments
-- Add Premier Access One windows during the day. The end of the window is treated as a hard deadline with a 5-minute arrival margin.
-- Add reserved viewing for Disney Tales of Magic or Disney Cascade of Lights. These use a 20-minute arrival margin and route to the relevant park area.
-- Add arbitrary hard timed items with an area and time.
-- Dynamic timed items persist locally and can be removed from the schedule.
-
-## Mobile layout fixes
-- The ride search field stacks full-width on narrow screens so iOS focus no longer pans the whole app sideways.
-- Time inputs and form controls are constrained to their grid cells to prevent iOS intrinsic-width overflow.
+## Live data
+ThemeParks.wiki remains the primary live feed. Queue-Times.com is used as a secondary cross-check through the Cloudflare Worker. Material status conflicts are excluded and large wait disagreements are penalised rather than silently trusted.
