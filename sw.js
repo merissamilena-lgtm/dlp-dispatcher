@@ -1,8 +1,8 @@
-const CACHE='dlp-dispatcher-v0.8.0';
+const CACHE='dlp-dispatcher-v0.8.1';
 const PUSH_CONTEXT_CACHE='dlp-push-context-v1';
 const PUSH_CONTEXT_URL='./__push_context__';
 const CLOUD_BASE='https://dlp-queue-proxy.rnspecfor.workers.dev';
-const ASSETS=['./','index.html','styles.css?v=0.8.0','app.js?v=0.8.0','manifest.webmanifest','icon.svg'];
+const ASSETS=['./','index.html','styles.css?v=0.8.1','app.js?v=0.8.1','manifest.webmanifest','icon.svg'];
 
 self.addEventListener('install',e=>{
   self.skipWaiting();

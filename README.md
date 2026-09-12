@@ -1,8 +1,8 @@
-# DLP Dispatcher v0.8.0
+# DLP Dispatcher v0.8.1
 
 Phone-first Disneyland Paris trip dispatcher for 30 Oct to 2 Nov 2026. It combines live waits, realistic attraction time, stroller-friendly walking, priorities and protected timed commitments so the family gets a useful next move without optimising the fun out of the day.
 
-## v0.8.0 polish pass
+## v0.8.1 polish pass
 - Main **Now** view stays operational: next timed point, top three recommendations, controls and schedule.
 - Full live attraction catalogue moves to a separate **Rides** view.
 - Ride cards can flip to a plain-English description with ride type, intensity, useful motion/theme flags and approximate experience time.

@@ -863,8 +863,8 @@
     decorateRideCards();
     $$('[data-priority]').forEach(b=>b.addEventListener('click',()=>cyclePriority(b.dataset.priority)));
     $$('[data-done]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.done;if(state.done[k])toggleDone(k);else markDoneWithUndo(k);}));
-    $('[data-unsnooze]').forEach(b=>b.addEventListener('click',()=>{delete state.notNow[b.dataset.unsnooze];save();renderAll();toast('Snooze cleared.');}));
-    $('[data-rider-switch]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleRiderSwitch(b.dataset.riderSwitch);}));
+    $$('[data-unsnooze]').forEach(b=>b.addEventListener('click',()=>{delete state.notNow[b.dataset.unsnooze];save();renderAll();toast('Snooze cleared.');}));
+    $$('[data-rider-switch]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleRiderSwitch(b.dataset.riderSwitch);}));
   }
 
   function dynamicKindLabel(c){ return c.kind==='premier'?'PREMIER':c.kind==='show'?'SHOW':c.kind==='other'?'TIMED':''; }
@@ -954,7 +954,7 @@
     const now=$('#viewNow'),rides=$('#viewRides');
     if(now)now.hidden=next!=='now';
     if(rides)rides.hidden=next!=='rides';
-    $('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===next));
+    $$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===next));
     if(scrollTop)window.scrollTo({top:0,behavior:'smooth'});
   }
   function toggleRiderSwitch(k){
@@ -962,7 +962,7 @@
     save();renderAll();toast(state.riderSwitch[k]?'Rider Switch timing on.':'Rider Switch timing off.');
   }
   function decorateRideCards(){
-    $('.ride-row').forEach(row=>{
+    $$('.ride-row').forEach(row=>{
       const id=row.id||'';
       const ride=state.rides.find(r=>rideRowId(keyFor(r.name))===id);
       if(!ride)return;
@@ -1369,7 +1369,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.8.0',
+      'DLP DISPATCHER STATUS v0.8.1',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -1398,7 +1398,7 @@
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.8.0 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.8.1 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 
@@ -1406,7 +1406,7 @@
     $('#refreshBtn').addEventListener('click',refreshLive);
     $('#gpsBtn').addEventListener('click',useGPS);
     $('#copyBtn').addEventListener('click',copyPacket);
-    $('[data-view]').forEach(b=>b.addEventListener('click',()=>activateView(b.dataset.view)));
+    $$('[data-view]').forEach(b=>b.addEventListener('click',()=>activateView(b.dataset.view)));
     $('#locationSelect').addEventListener('change',e=>{ state.gps=null; state.gpsAccuracy=null; state.settings.location=e.target.value; state.settings.locationSource='manual'; $('#gpsBtn').textContent='Use my location'; save(); renderAll(); });
     $('#modeSelect').addEventListener('change',e=>{state.settings.mode=e.target.value;save();renderAll();});
     $('#singleRiderToggle').addEventListener('change',e=>{state.settings.singleRider=e.target.checked;save();renderAll();});
