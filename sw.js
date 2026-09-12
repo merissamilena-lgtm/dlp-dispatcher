@@ -1,4 +1,4 @@
-const CACHE='dlp-dispatcher-v0.6.1';
+const CACHE='dlp-dispatcher-v0.7.0';
 const ASSETS=['./','index.html','styles.css?v=0.6.1','app.js?v=0.6.1','manifest.webmanifest','icon.svg'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});

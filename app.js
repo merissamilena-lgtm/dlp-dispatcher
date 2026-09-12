@@ -19,6 +19,11 @@
   const NOT_NOW_MIN = 30;
   const HARD_ANCHOR_MIN_SLACK = 5;
   const HARD_ANCHOR_TIGHT_SLACK = 10;
+  const SHOW_LOCATIONS = {
+    tales: { name: 'Disney Tales of Magic reserved viewing', area: 'Frontierland', locationNote: 'reserved area by the Frontierland entrance' },
+    cascade: { name: 'Disney Cascade of Lights reserved viewing', area: 'World of Frozen', locationNote: 'reserved terrace below The Regal View Restaurant & Lounge' }
+  };
+  const DYNAMIC_ITEM_BUFFERS = { premier: 5, show: 20, other: 10 };
 
   const AREAS = {
     'Disneyland Park entrance': { lat: 48.87070, lon: 2.77972, park: 'Disneyland Park' },
@@ -170,6 +175,7 @@
     priorities: loadJSON('dlpPriorities', {}),
     done: loadJSON('dlpDone', {}),
     notNow: loadJSON('dlpNotNow', {}),
+    dynamicCommitments: loadJSON('dlpDynamicCommitments', []),
     settings: Object.assign({
       mode: 'balanced', singleRider: false, parkHop: false, softPlans: false, precisionRouting: true,
       mealBuffer: 15, trainBuffer: 35, walkSpeed: 55, routeFactor: 1.25,
@@ -187,6 +193,7 @@
     localStorage.setItem('dlpPriorities', JSON.stringify(state.priorities));
     localStorage.setItem('dlpDone', JSON.stringify(state.done));
     localStorage.setItem('dlpNotNow', JSON.stringify(state.notNow));
+    localStorage.setItem('dlpDynamicCommitments', JSON.stringify(state.dynamicCommitments));
     localStorage.setItem('dlpSettings', JSON.stringify(state.settings));
   }
 
@@ -266,7 +273,16 @@
     if(commitment){const cp=graphNearest(pointForCommitment(commitment));if(cp)dijkstraFrom(cp.id);}
   }
   function routingAttraction(name){return state.routingLocations?.attractions?.[keyFor(name)]||null;}
-  function pointForCommitment(c){const p=precisionRoutingEnabled()?state.routingLocations?.commitments?.[c?.id]?.entrance:null;return p?{lat:p.lat,lon:p.lon,park:areaPoint(c.area)?.park}:areaPoint(c?.area);}
+  function pointForCommitment(c){
+    if(!c)return null;
+    if(c.kind==='premier'&&c.rideKey){
+      const ride=state.rides.find(r=>keyFor(r.name)===c.rideKey);
+      if(ride)return pointForRide(ride,'entrance');
+    }
+    if(c.point&&Number.isFinite(Number(c.point.lat))&&Number.isFinite(Number(c.point.lon)))return {lat:Number(c.point.lat),lon:Number(c.point.lon),park:c.point.park||areaPoint(c.area)?.park};
+    const p=precisionRoutingEnabled()?state.routingLocations?.commitments?.[c.id]?.entrance:null;
+    return p?{lat:p.lat,lon:p.lon,park:areaPoint(c.area)?.park}:areaPoint(c.area);
+  }
   async function loadRoutingData(){
     try{
       const [gr,lr]=await Promise.all([fetch('data/routing-graph.json?v=0.6.1'),fetch('data/routing-locations.json?v=0.6.1')]);
@@ -331,12 +347,24 @@
   function fmtDate(date) {
     return new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'numeric',month:'short'}).format(new Date(`${date}T12:00:00+01:00`));
   }
-  function bufferFor(c) { return c.kind === 'train' ? Number(state.settings.trainBuffer) : Number(state.settings.mealBuffer); }
+  function allCommitments(){ return [...COMMITMENTS,...state.dynamicCommitments]; }
+  function commitmentDisplayTime(c){ return c?.kind==='premier'&&c.endTime ? `${c.time}–${c.endTime}` : c?.time; }
+  function commitmentTargetClock(c){ return c?.kind==='premier'&&c.endTime ? c.endTime : c?.time; }
+  function commitmentDateTime(c){ return parisDateTime(c.date,commitmentTargetClock(c)); }
+  function bufferFor(c) {
+    const custom=Number(c?.buffer);
+    if(Number.isFinite(custom))return custom;
+    if(c?.kind==='train')return Number(state.settings.trainBuffer);
+    if(c?.kind==='premier')return DYNAMIC_ITEM_BUFFERS.premier;
+    if(c?.kind==='show')return DYNAMIC_ITEM_BUFFERS.show;
+    if(c?.kind==='other')return DYNAMIC_ITEM_BUFFERS.other;
+    return Number(state.settings.mealBuffer);
+  }
   function nextCommitment(now = plannerNow()) {
     const day = parisDateKey(now);
     if (day < '2026-10-30' || day > '2026-11-02') return null;
-    const candidates = COMMITMENTS.filter(c => (c.hard || state.settings.softPlans) && parisDateTime(c.date,c.time) > now);
-    return candidates.sort((a,b)=>parisDateTime(a.date,a.time)-parisDateTime(b.date,b.time))[0] || null;
+    const candidates = allCommitments().filter(c => (c.hard || state.settings.softPlans) && commitmentDateTime(c) > now);
+    return candidates.sort((a,b)=>commitmentDateTime(a)-commitmentDateTime(b))[0] || null;
   }
 
   async function fetchThemeParks() {
@@ -554,7 +582,7 @@
     let walkOnward=0, minutesToTarget=null, fits=true, target=null, anchorConsumption=null, anchorSlack=null, tightFit=false;
     if (commitment) {
       const cPoint=pointForCommitment(commitment);
-      const safeAt=new Date(parisDateTime(commitment.date,commitment.time).getTime()-bufferFor(commitment)*60000);
+      const safeAt=new Date(commitmentDateTime(commitment).getTime()-bufferFor(commitment)*60000);
       minutesToTarget=Math.floor((safeAt-now)/60000);
       walkOnward=walkMinutes(rideExit,cPoint)+parkHopPenalty(ride.park,cPoint?.park);
       const totalNeeded=walkTo+chosenWait+dwellMinutes+walkOnward;
@@ -661,22 +689,24 @@
       $('.hero').classList.remove('urgency-safe','urgency-tight','urgency-now');
       return;
     }
-    const at = parisDateTime(c.date,c.time), safeAt = new Date(at.getTime()-bufferFor(c)*60000);
+    const at = commitmentDateTime(c), safeAt = new Date(at.getTime()-bufferFor(c)*60000);
     const mins = Math.max(0,Math.floor((safeAt-now)/60000));
     $('#nextName').textContent = c.name;
-    $('#nextMeta').textContent = `${fmtDate(c.date)} · ${c.time} · ${c.area}${c.hard?'':' · soft plan'}`;
+    const timeMeta=c.kind==='premier'?`Premier Access ${commitmentDisplayTime(c)}`:commitmentDisplayTime(c);
+    $('#nextMeta').textContent = `${fmtDate(c.date)} · ${timeMeta} · ${c.area}${c.locationNote?` · ${c.locationNote}`:''}${c.hard?'':' · soft plan'}`;
     $('#countdown').textContent = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins} min`;
     const cPoint=pointForCommitment(c), directWalk=walkMinutes(currentPoint(),cPoint)+parkHopPenalty(currentPark(),cPoint?.park), directSlack=mins-directWalk;
     const urgency=directSlack<=HARD_ANCHOR_MIN_SLACK?'now':directSlack<15?'tight':'safe';
     const ub=$('#urgencyBadge');if(ub){ub.hidden=false;ub.className=`urgency-badge ${urgency}`;ub.textContent=urgency==='now'?'⛔ MOVE NOW':urgency==='tight'?'⚠ GETTING TIGHT':'✓ SAFE';}
     $('.hero').classList.remove('urgency-safe','urgency-tight','urgency-now');$('.hero').classList.add(`urgency-${urgency}`);
-    $('#safeLine').textContent = `Target arrival ${parisTime(safeAt)} · about ${directWalk}m direct walk · ${directSlack}m direct-route slack. The engine rejects anything that cannot finish and get you there safely.`;
+    const targetLabel=c.kind==='premier'?'Latest safe arrival':'Target arrival';
+    $('#safeLine').textContent = `${targetLabel} ${parisTime(safeAt)} · about ${directWalk}m direct walk · ${directSlack}m direct-route slack. The engine rejects anything that cannot finish and get you there safely.`;
   }
 
   function renderRecommendations() {
     const recs = topRecommendations(), all = allRecommendations(), box = $('#recommendations');
     if (!state.rides.length) { box.innerHTML = '<div class="card loading">No live attraction data yet.</div>'; renderParkHopNote([]); return; }
-    if (!recs.length) { const c=nextCommitment(plannerNow());let msg='Nothing with fresh, explicit OPEN data safely fits the current rules.';if(c){const cp=pointForCommitment(c),safeAt=new Date(parisDateTime(c.date,c.time).getTime()-bufferFor(c)*60000),mins=Math.max(0,Math.floor((safeAt-plannerNow())/60000)),walk=walkMinutes(currentPoint(),cp)+parkHopPenalty(currentPark(),cp?.park),slack=mins-walk;msg=slack<=HARD_ANCHOR_MIN_SLACK?`⛔ MOVE NOW · Head to ${c.name}. No attraction fits with a safe transfer margin.`:`No attraction fits safely. Start heading toward ${c.name} or enjoy the area without joining another queue.`;}box.innerHTML=`<div class="card empty ${msg.startsWith('⛔')?'move-now':''}">${esc(msg)}</div>`; renderParkHopNote(all); return; }
+    if (!recs.length) { const c=nextCommitment(plannerNow());let msg='Nothing with fresh, explicit OPEN data safely fits the current rules.';if(c){const cp=pointForCommitment(c),safeAt=new Date(commitmentDateTime(c).getTime()-bufferFor(c)*60000),mins=Math.max(0,Math.floor((safeAt-plannerNow())/60000)),walk=walkMinutes(currentPoint(),cp)+parkHopPenalty(currentPark(),cp?.park),slack=mins-walk;msg=slack<=HARD_ANCHOR_MIN_SLACK?`⛔ MOVE NOW · Head to ${c.name}. No attraction fits with a safe transfer margin.`:`No attraction fits safely. Start heading toward ${c.name} or enjoy the area without joining another queue.`;}box.innerHTML=`<div class="card empty ${msg.startsWith('⛔')?'move-now':''}">${esc(msg)}</div>`; renderParkHopNote(all); return; }
     box.innerHTML = recs.map((x,i)=>{
       const k=keyFor(x.ride.name), opp=x.avg==null?null:x.avg-x.chosenWait;
       const oppText=opp==null?'no historical baseline':opp>=10?`${opp}m below 2026 avg`:opp<=-10?`${Math.abs(opp)}m above 2026 avg`:'near usual wait';
@@ -712,10 +742,53 @@
     $$('[data-unsnooze]').forEach(b=>b.addEventListener('click',()=>{delete state.notNow[b.dataset.unsnooze];save();renderAll();toast('Snooze cleared.');}));
   }
 
+  function dynamicKindLabel(c){ return c.kind==='premier'?'PREMIER':c.kind==='show'?'SHOW':c.kind==='other'?'TIMED':''; }
+  function populateTimedRideOptions(){
+    const dl=$('#rideOptions');if(!dl)return;
+    dl.innerHTML=[...state.rides].sort((a,b)=>a.name.localeCompare(b.name)).map(r=>`<option value="${esc(r.name)}"></option>`).join('');
+  }
+  function updateTimedForm(){
+    const type=$('#timedType')?.value||'premier';
+    $('#timedPremierFields').hidden=type!=='premier';
+    $('#timedShowFields').hidden=type!=='show';
+    $('#timedOtherFields').hidden=type!=='other';
+    const help=$('#timedHelp');if(help)help.textContent=type==='premier'?'Premier Access uses the end of the Disney time window as a hard deadline, with a 5-minute arrival margin.':type==='show'?'Reserved viewing is treated as a hard show-time commitment with a 20-minute arrival margin.':'Other timed items use a 10-minute arrival margin.';
+  }
+  function addTimedItem(){
+    const type=$('#timedType').value,date=$('#timedDate').value,id=`dyn-${Date.now().toString(36)}`;
+    let item={id,date,hard:true,dynamic:true,kind:type};
+    if(type==='premier'){
+      const entered=$('#timedRide').value.trim(),start=$('#timedStart').value,end=$('#timedEnd').value;
+      const ride=state.rides.find(r=>keyFor(r.name)===keyFor(entered))||state.rides.find(r=>norm(entered).length>3&&norm(r.name).includes(norm(entered)));
+      if(!ride)return toast('Pick a ride from the current attraction list.');
+      if(!start||!end)return toast('Add both the start and end of the Premier Access window.');
+      if(end<=start)return toast('Premier Access end time must be after the start time.');
+      const area=ride.area||metaFor(ride.name).area||currentPark();
+      item={...item,name:`${ride.name} · Premier Access`,rideName:ride.name,rideKey:keyFor(ride.name),area,time:start,endTime:end,buffer:DYNAMIC_ITEM_BUFFERS.premier};
+    }else if(type==='show'){
+      const preset=SHOW_LOCATIONS[$('#timedShow').value],time=$('#timedShowTime').value;
+      if(!preset||!time)return toast('Choose the show and time.');
+      item={...item,...preset,time,buffer:DYNAMIC_ITEM_BUFFERS.show};
+    }else{
+      const name=$('#timedOtherName').value.trim(),area=$('#timedOtherArea').value,time=$('#timedOtherTime').value;
+      if(!name||!area||!time)return toast('Add a name, area and time.');
+      item={...item,name,area,time,buffer:DYNAMIC_ITEM_BUFFERS.other};
+    }
+    state.dynamicCommitments.push(item);save();renderAll();
+    $('#timedDetails').open=false;
+    if(type==='premier'){$('#timedRide').value='';$('#timedStart').value='';$('#timedEnd').value='';}
+    else if(type==='other'){$('#timedOtherName').value='';$('#timedOtherTime').value='';}
+    toast('Timed item added and protected.');
+  }
+  function removeTimedItem(id){
+    state.dynamicCommitments=state.dynamicCommitments.filter(x=>x.id!==id);save();renderAll();toast('Timed item removed.');
+  }
   function renderSchedule() {
     const groups = {};
-    COMMITMENTS.forEach(c => (groups[c.date] ||= []).push(c));
-    $('#scheduleList').innerHTML = Object.entries(groups).map(([date,items])=>`<div class="schedule-day"><div class="schedule-date">${fmtDate(date)}</div>${items.map(c=>`<div class="schedule-item"><strong>${c.time}</strong><span>${esc(c.name)} · ${esc(c.area)}</span>${c.hard?'':'<span class="soft">SOFT</span>'}</div>`).join('')}</div>`).join('');
+    allCommitments().sort((a,b)=>commitmentDateTime(a)-commitmentDateTime(b)).forEach(c => (groups[c.date] ||= []).push(c));
+    $('#scheduleList').innerHTML = Object.entries(groups).map(([date,items])=>`<div class="schedule-day"><div class="schedule-date">${fmtDate(date)}</div>${items.map(c=>{const t=commitmentDisplayTime(c),kind=dynamicKindLabel(c),note=c.locationNote?` · ${c.locationNote}`:'';return `<div class="schedule-item ${c.dynamic?'dynamic':''}"><strong>${t}</strong><span>${esc(c.name)} · ${esc(c.area)}${esc(note)}</span><span class="schedule-badges">${kind?`<span class="timed-chip">${kind}</span>`:c.hard?'':'<span class="soft">SOFT</span>'}${c.dynamic?`<button class="remove-timed" data-remove-timed="${esc(c.id)}" aria-label="Remove ${esc(c.name)}">×</button>`:''}</span></div>`;}).join('')}</div>`).join('');
+    $('[data-remove-timed]').forEach(b=>b.addEventListener('click',()=>removeTimedItem(b.dataset.removeTimed)));
+    populateTimedRideOptions();
   }
 
   function renderSourceAge() {
@@ -845,7 +918,7 @@
       let chosenWait=ride.wait;
       if(state.settings.singleRider&&Number.isFinite(ride.singleRiderWait)&&ride.singleRiderWait<chosenWait)chosenWait=ride.singleRiderWait;
       const dwellMinutes=experienceMinutes(meta), cPoint=pointForCommitment(commitment);
-      const safeAt=new Date(parisDateTime(commitment.date,commitment.time).getTime()-bufferFor(commitment)*60000);
+      const safeAt=new Date(commitmentDateTime(commitment).getTime()-bufferFor(commitment)*60000);
       const minutesToTarget=Math.floor((safeAt-now)/60000);
       const walkOnward=walkMinutes(rideExit,cPoint)+parkHopPenalty(ride.park,cPoint?.park);
       const totalNeeded=walkTo+chosenWait+dwellMinutes+walkOnward;
@@ -881,7 +954,7 @@
       const precisionAnchor = pointForCommitment(commitment);
       const legacyAnchor = areaPoint(commitment.area);
       const legacyOnward = legacyWalkMinutes(legacyRide,legacyAnchor) + parkHopPenalty(x.ride.park,legacyAnchor?.park);
-      const anchorEvidence = state.routingLocations?.commitments?.[commitment.id]?.entrance;
+      const anchorEvidence = commitment.kind==='premier' ? routingAttraction(commitment.rideName)?.entrance : state.routingLocations?.commitments?.[commitment.id]?.entrance;
       bits.push(`onward precision ${x.walkOnward}m vs legacy ${legacyOnward}m`);
       bits.push(`anchor entrance ${endpointEvidence(anchorEvidence)}`);
       const entrySnap = graphNearest(precisionEntry), exitSnap = graphNearest(precisionExit), anchorSnap = graphNearest(precisionAnchor);
@@ -914,15 +987,16 @@
     let commitmentLine = 'Next fixed point: none active';
     let safeMinutesLine = 'Safe time remaining: not constrained by a fixed point';
     if (c) {
-      const safeAt = new Date(parisDateTime(c.date,c.time).getTime()-bufferFor(c)*60000);
+      const safeAt = new Date(commitmentDateTime(c).getTime()-bufferFor(c)*60000);
       const safeMins = Math.max(0, Math.floor((safeAt-now)/60000));
       const anchorType=c.hard?'HARD':'SOFT', appliedBuffer=bufferFor(c), residual=c.hard?`; minimum residual slack ${HARD_ANCHOR_MIN_SLACK}m`:'';
-      commitmentLine = `Next fixed point: ${c.name} at ${c.time}; target arrival ${parisTime(safeAt)}; area ${c.area}; ${anchorType}; buffer ${appliedBuffer}m${residual}`;
+      const displayTime=commitmentDisplayTime(c), timing=c.kind==='premier'?`window ${displayTime}; latest safe arrival ${parisTime(safeAt)}`:`at ${displayTime}; target arrival ${parisTime(safeAt)}`;
+      commitmentLine = `Next fixed point: ${c.name} ${timing}; area ${c.area}; ${anchorType}; buffer ${appliedBuffer}m${residual}`;
       safeMinutesLine = `Safe time remaining: ${safeMins} minutes until target arrival`;
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.6.1',
+      'DLP DISPATCHER STATUS v0.7.0',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -936,6 +1010,7 @@
       `Feed disagreement detail: ${state.feedDisagreements.length ? state.feedDisagreements.map(feedDisagreementSummary).join(' | ') : 'none'}`,
       commitmentLine,
       safeMinutesLine,
+      `Timed items: ${state.dynamicCommitments.length ? state.dynamicCommitments.map(x=>`${x.name} (${fmtDate(x.date)} ${commitmentDisplayTime(x)})`).join(' | ') : 'none'}`,
       `Top engine picks: ${recs.map((x,i)=>packetRecommendation(x,i+1)).join(' | ') || 'none'}`,
       ...(!live ? [
         `Routing diagnostics: ${precisionRoutingEnabled() ? (recs.map(x=>routingDiagnostic(x,c)).filter(Boolean).join(' | ') || 'no eligible top candidates') : 'precision routing disabled or unavailable'}`,
@@ -949,7 +1024,7 @@
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.6.1 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.7.0 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 
@@ -962,6 +1037,8 @@
     $('#singleRiderToggle').addEventListener('change',e=>{state.settings.singleRider=e.target.checked;save();renderAll();});
     $('#parkHopToggle').addEventListener('change',e=>{state.settings.parkHop=e.target.checked;save();renderAll();});
     $('#softPlansToggle').addEventListener('change',e=>{state.settings.softPlans=e.target.checked;save();renderAll();});
+    $('#timedType').addEventListener('change',updateTimedForm);
+    $('#addTimedItem').addEventListener('click',addTimedItem);
     $('#precisionRoutingToggle').addEventListener('change',e=>{state.settings.precisionRouting=e.target.checked;save();renderAll();});
     $('#previewToggle').addEventListener('change',e=>{state.settings.preview=e.target.checked;save();renderAll();});
     $('#previewDate').addEventListener('change',e=>{state.settings.previewDate=e.target.value;save();renderAll();});
@@ -976,7 +1053,10 @@
   }
 
   function refreshOnResume(){if(document.visibilityState!=='visible')return;const age=state.lastFetchedAt?(Date.now()-state.lastFetchedAt.getTime()):Infinity;if(age>60000)refreshLive();else{renderSourceAge();renderWaitBoard();}}
-  initLocationSelect(); bind(); renderAll(); loadRoutingData(); refreshLive();
+  initLocationSelect();
+  const timedArea=$('#timedOtherArea');if(timedArea)timedArea.innerHTML=Object.entries(AREAS).filter(([,p])=>isThemePark(p.park)).map(([name])=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+  const timedDate=$('#timedDate');if(timedDate)timedDate.value=state.settings.previewDate||'2026-10-30';
+  bind(); updateTimedForm(); renderAll(); loadRoutingData(); refreshLive();
   setInterval(refreshLive, REFRESH_MS);
   setInterval(()=>{renderHero();renderPreviewSummary();renderSourceAge();renderWaitBoard();},60000);
   document.addEventListener('visibilitychange',refreshOnResume);

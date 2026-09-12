@@ -1,4 +1,4 @@
-# DLP Dispatcher v0.6.1
+# DLP Dispatcher v0.7.0
 
 This build adds TEST packet route-vs-legacy diagnostics to the precision-routing layer while preserving the v0.5.3 scoring and booking safety rules.
 
@@ -25,3 +25,14 @@ Precision routing is deliberately TEST-only until route comparisons are validate
 - Reports attraction entrance and exit confidence/source, plus fixed-point entrance confidence.
 - Reports graph snap distance for ride entrance, ride exit and fixed point so weak endpoint geometry is visible during validation.
 - No scoring weights or hard-anchor safety thresholds changed.
+
+
+## Timed commitments
+- Add Premier Access One windows during the day. The end of the window is treated as a hard deadline with a 5-minute arrival margin.
+- Add reserved viewing for Disney Tales of Magic or Disney Cascade of Lights. These use a 20-minute arrival margin and route to the relevant park area.
+- Add arbitrary hard timed items with an area and time.
+- Dynamic timed items persist locally and can be removed from the schedule.
+
+## Mobile layout fixes
+- The ride search field stacks full-width on narrow screens so iOS focus no longer pans the whole app sideways.
+- Time inputs and form controls are constrained to their grid cells to prevent iOS intrinsic-width overflow.
