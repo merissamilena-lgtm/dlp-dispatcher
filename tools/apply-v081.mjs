@@ -12,8 +12,8 @@ app=replaceExact(app,"$('.ride-row').forEach","$$('.ride-row').forEach",'ride ro
 app=replaceExact(app,"$('[data-unsnooze]').forEach","$$('[data-unsnooze]').forEach",'unsnooze selector');
 app=replaceExact(app,"$('[data-rider-switch]').forEach","$$('[data-rider-switch]').forEach",'Rider Switch selector');
 app=app.replaceAll('v0.8.0','v0.8.1');
-html=html.replaceAll('v0.8.0','v0.8.1');
-sw=sw.replaceAll('v0.8.0','v0.8.1');
+html=html.replaceAll('v0.8.0','v0.8.1').replaceAll('?v=0.8.0','?v=0.8.1');
+sw=sw.replaceAll('v0.8.0','v0.8.1').replaceAll('?v=0.8.0','?v=0.8.1');
 readme=readme.replaceAll('v0.8.0','v0.8.1');
 write('app.js',app);write('index.html',html);write('sw.js',sw);write('README.md',readme);
-console.log('Applied v0.8.1 selector hotfix.');
+console.log('Applied v0.8.1 selector and cache-bust hotfix.');
