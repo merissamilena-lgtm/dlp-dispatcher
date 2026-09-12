@@ -1,0 +1,1 @@
+Apply DLP Dispatcher v0.8.2 sticky navigation and cloud guard.
