@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#101425" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DLP Dispatcher" />
+  <title>DLP Dispatcher</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css?v=0.8.0" />
+</head>
+<body>
+  <header class="topbar">
+    <div><div class="eyebrow">30 Oct to 2 Nov 2026 · v0.8.0</div><h1>DLP Dispatcher</h1></div>
+    <div class="status-pill" id="liveStatus"><span class="dot"></span><span>Connecting</span></div>
+  </header>
+  <main>
+    <section class="session-banner test" id="sessionBanner"><div class="session-badge" id="sessionMode">TEST MODE</div><div id="sessionDetail">No in-resort GPS fix. Recommendations are a simulation using the selected test area.</div></section>
+    <section class="quick-tools">
+      <details class="preview-quick" id="previewDetails"><summary><span id="previewSummary">Preview: off</span></summary><div class="preview-panel">
+        <label class="preview-enable"><input id="previewToggle" type="checkbox" /> <span>Enable preview clock</span></label>
+        <div class="preview-grid"><label><span>Date</span><select id="previewDate"><option value="2026-10-30">Fri 30 Oct</option><option value="2026-10-31">Sat 31 Oct</option><option value="2026-11-01">Sun 1 Nov</option><option value="2026-11-02">Mon 2 Nov</option></select></label><label><span>Paris time</span><input id="previewTime" type="time" value="17:00" /></label></div>
+        <p class="muted tiny">Uses today's live queues against the selected trip time. It tests routing logic, not October queue predictions.</p>
+      </div></details>
+      <div class="top-updated" id="topUpdated">Waiting for live data</div>
+    </section>
+
+    <nav class="view-tabs" aria-label="Dispatcher views">
+      <button class="view-tab active" type="button" data-view="now">Now</button>
+      <button class="view-tab" type="button" data-view="rides">Rides</button>
+    </nav>
+
+    <div id="viewNow" class="view-panel">
+      <section class="hero card"><div class="hero-top"><div><div class="label">NEXT TIMED POINT</div><div class="commitment-name" id="nextName">No trip commitment active</div><div class="muted" id="nextMeta">Live queues still work. Use Preview to test trip deconfliction.</div></div><div class="countdown" id="countdown">--</div></div><div class="urgency-badge" id="urgencyBadge" hidden></div><div class="safe-line" id="safeLine">Recommendations are not time-blocked outside the trip dates.</div><div class="button-row"><button class="primary" id="refreshBtn">Refresh live</button><button id="gpsBtn">Use my location</button><button id="copyBtn">Copy ChatGPT packet</button></div></section>
+
+      <section class="controls card"><div class="control-grid"><label><span>Current area</span><select id="locationSelect"></select></label><label><span>Mode</span><select id="modeSelect"><option value="balanced">Balanced</option><option value="lowWalk">Low walking</option><option value="queueHunter">Queue hunter</option><option value="rain">Rain / indoor bias</option></select></label></div><div class="toggle-row"><label class="switch-label"><input type="checkbox" id="singleRiderToggle" /> Consider Single Rider</label><label class="switch-label"><input type="checkbox" id="parkHopToggle" /> Consider the other park</label><label class="switch-label"><input type="checkbox" id="softPlansToggle" /> Block time for soft plans</label><label class="switch-label"><input type="checkbox" id="precisionRoutingToggle" checked /> Precision routing (TEST · pushchair)</label></div></section>
+
+      <section><div class="section-heading"><div><div class="eyebrow">DECISION ENGINE</div><h2>Best next moves</h2></div><div class="source-age" id="sourceAge">Waiting for data</div></div><div id="recommendations" class="recommendations"><div class="card loading">Pulling live waits...</div></div><div class="hop-note" id="parkHopNote" hidden></div><div class="feed-health" id="feedHealth">Cross-check not available yet.</div></section>
+
+      <section class="card schedule-card"><div class="section-heading compact"><div><div class="eyebrow">ANCHORS</div><h2>Your schedule</h2></div></div><div id="scheduleList" class="schedule-list"></div><details class="timed-add" id="timedDetails"><summary>+ Add timed item</summary><div class="timed-form"><div class="timed-grid"><label><span>Type</span><select id="timedType"><option value="premier">Premier Access</option><option value="show">Show / reserved viewing</option><option value="other">Other timed item</option></select></label><label><span>Date</span><select id="timedDate"><option value="2026-10-30">Fri 30 Oct</option><option value="2026-10-31">Sat 31 Oct</option><option value="2026-11-01">Sun 1 Nov</option><option value="2026-11-02">Mon 2 Nov</option></select></label></div><div id="timedPremierFields"><label><span>Attraction</span><input id="timedRide" type="text" list="rideOptions" autocomplete="off" placeholder="Start typing a ride" /><datalist id="rideOptions"></datalist></label><div class="timed-grid"><label><span>Window starts</span><input id="timedStart" type="time" /></label><label><span>Window ends</span><input id="timedEnd" type="time" /></label></div></div><div id="timedShowFields" hidden><label><span>Reserved viewing</span><select id="timedShow"><option value="tales">Disney Tales of Magic · Frontierland entrance</option><option value="cascade">Disney Cascade of Lights · Regal View terrace</option></select></label><label><span>Show time</span><input id="timedShowTime" type="time" /></label></div><div id="timedOtherFields" hidden><label><span>Name</span><input id="timedOtherName" type="text" autocomplete="off" placeholder="Character slot, show, meet-up…" /></label><div class="timed-grid"><label><span>Area</span><select id="timedOtherArea"></select></label><label><span>Time</span><input id="timedOtherTime" type="time" /></label></div></div><p class="muted small" id="timedHelp"></p><button class="primary" id="addTimedItem" type="button">Save timed item</button></div></details><p class="muted small schedule-note">Meals use a 15-minute arrival buffer, the train 35 minutes, Premier Access 5 minutes before the end of its window, and reserved viewing 20 minutes before show time.</p></section>
+
+      <section class="card"><details><summary>Settings, sync and trip tuning</summary><div class="settings-grid"><label><span>Meal arrival buffer</span><input id="mealBuffer" type="number" min="0" max="45" step="5" value="15" /><small>minutes</small></label><label><span>Train arrival buffer</span><input id="trainBuffer" type="number" min="10" max="90" step="5" value="35" /><small>minutes</small></label><label><span>Walking speed</span><input id="walkSpeed" type="number" min="35" max="90" step="5" value="55" /><small>metres/min</small></label><label><span>Route fudge factor</span><input id="routeFactor" type="number" min="1" max="2" step="0.05" value="1.25" /><small>straight-line multiplier</small></label></div><div class="button-row"><button id="resetProgress">Reset DONE marks</button><button id="resetPriorities">Reset priorities</button><button id="resetRiderSwitch">Reset Rider Switch</button></div>
+        <div class="sync-panel">
+          <div class="eyebrow">CLOUD</div><h3>Safari ↔ Home Screen sync</h3>
+          <p class="muted small">Start sync on one copy, copy its private sync key, then paste that key into the other copy once. After that, priorities, DONE marks, snoozes, Rider Switch choices, timed items and trip settings stay in step while connected. Local storage still works offline.</p>
+          <div id="syncStatus" class="sync-status">Not linked to Cloudflare yet.</div>
+          <div id="syncKeyLine" class="sync-key-line" hidden>Linked key <code id="syncKeyPreview"></code></div>
+          <div class="button-row sync-buttons"><button class="primary" id="createSyncBtn" type="button">Start cloud sync</button><button id="copySyncBtn" type="button" hidden>Copy sync key</button><button id="unlinkSyncBtn" type="button" hidden>Unlink this copy</button></div>
+          <label class="sync-link-label"><span>Link this copy with an existing sync key</span><div class="sync-link-row"><input id="syncKeyInput" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Paste sync key" /><button id="linkSyncBtn" type="button">Link</button></div></label>
+          <div class="alerts-panel"><div><strong>Trip alerts</strong><div id="alertStatus" class="muted small">Notifications are off.</div></div><div class="button-row"><button id="enableAlertsBtn" type="button">Enable trip alerts</button><button id="testAlertBtn" type="button" hidden>Send test alert</button></div><p class="muted tiny">On iPhone, push notifications are available from the installed Home Screen app. Background alerts are conservative countdown warnings; open Dispatcher for live GPS-aware walking time.</p></div>
+        </div>
+      </details></section>
+
+      <section class="card note-card"><strong>Operating rule:</strong> never risk a timed booking for one more attraction. The engine estimates walking, queueing, realistic experience time, Rider Switch where selected and onward travel, then rejects anything that does not fit with the selected buffer.</section>
+    </div>
+
+    <div id="viewRides" class="view-panel" hidden>
+      <section><div class="section-heading waits-heading"><div><div class="eyebrow">LIVE BOARD</div><h2>Rides</h2><div class="muted small rides-help">Browse when you want to. Tap a ride card to flip it over for a plain-English description.</div></div><div class="search-wrap"><input class="search" id="searchInput" type="search" placeholder="Search attractions" /><button class="search-clear" id="clearSearch" type="button" hidden>Clear</button></div></div><div class="filter-row"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="Disneyland Park">Disneyland Park</button><button class="filter" data-filter="Disney Adventure World">Adventure World</button><button class="filter" data-filter="done">Done</button></div><div id="waitBoard" class="wait-board"></div></section>
+    </div>
+  </main>
+  <footer><div>Independent trip tool, not affiliated with Disney.</div><div>Primary live data: <a href="https://themeparks.wiki/" target="_blank" rel="noreferrer">ThemeParks.wiki</a>. Secondary cross-check: <a href="https://queue-times.com/" target="_blank" rel="noreferrer">Powered by Queue-Times.com</a> via the DLP Dispatcher proxy.</div></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastUndo" type="button" hidden>Undo</button></div>
+  <script src="app.js?v=0.8.0"></script>
+</body></html>
