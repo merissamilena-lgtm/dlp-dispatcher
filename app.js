@@ -787,7 +787,7 @@
     const groups = {};
     allCommitments().sort((a,b)=>commitmentDateTime(a)-commitmentDateTime(b)).forEach(c => (groups[c.date] ||= []).push(c));
     $('#scheduleList').innerHTML = Object.entries(groups).map(([date,items])=>`<div class="schedule-day"><div class="schedule-date">${fmtDate(date)}</div>${items.map(c=>{const t=commitmentDisplayTime(c),kind=dynamicKindLabel(c),note=c.locationNote?` · ${c.locationNote}`:'';return `<div class="schedule-item ${c.dynamic?'dynamic':''}"><strong>${t}</strong><span>${esc(c.name)} · ${esc(c.area)}${esc(note)}</span><span class="schedule-badges">${kind?`<span class="timed-chip">${kind}</span>`:c.hard?'':'<span class="soft">SOFT</span>'}${c.dynamic?`<button class="remove-timed" data-remove-timed="${esc(c.id)}" aria-label="Remove ${esc(c.name)}">×</button>`:''}</span></div>`;}).join('')}</div>`).join('');
-    $('[data-remove-timed]').forEach(b=>b.addEventListener('click',()=>removeTimedItem(b.dataset.removeTimed)));
+    $$('[data-remove-timed]').forEach(b=>b.addEventListener('click',()=>removeTimedItem(b.dataset.removeTimed)));
     populateTimedRideOptions();
   }
 
@@ -996,7 +996,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.7.1',
+      'DLP DISPATCHER STATUS v0.7.2',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -1024,7 +1024,7 @@
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.7.1 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.7.2 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 

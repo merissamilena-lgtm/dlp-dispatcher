@@ -1,4 +1,4 @@
-# DLP Dispatcher v0.7.1
+# DLP Dispatcher v0.7.2
 
 This build adds TEST packet route-vs-legacy diagnostics to the precision-routing layer while preserving the v0.5.3 scoring and booking safety rules.
 
