@@ -1,0 +1,41 @@
+
+  function activateView(view,scrollTop=true){
+    const next=view==='rides'?'rides':'now';
+    state.activeView=next;
+    const now=$('#viewNow'),rides=$('#viewRides');
+    if(now)now.hidden=next!=='now';
+    if(rides)rides.hidden=next!=='rides';
+    $$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===next));
+    if(scrollTop)window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function toggleRiderSwitch(k){
+    if(state.riderSwitch[k])delete state.riderSwitch[k];else state.riderSwitch[k]=true;
+    save();renderAll();toast(state.riderSwitch[k]?'Rider Switch timing on.':'Rider Switch timing off.');
+  }
+  function decorateRideCards(){
+    $$('.ride-row').forEach(row=>{
+      const id=row.id||'';
+      const ride=state.rides.find(r=>rideRowId(keyFor(r.name))===id);
+      if(!ride)return;
+      const rideKey=keyFor(ride.name),meta=metaFor(ride.name),guide=guideFor(ride.name,meta);
+      const front=document.createElement('div');front.className='ride-card-face ride-card-front';
+      while(row.firstChild)front.appendChild(row.firstChild);
+      const actions=front.querySelector('.ride-actions');
+      if(actions&&riderSwitchEligible(meta)){
+        const button=document.createElement('button');
+        button.type='button';button.className=`rider-switch-btn ${state.riderSwitch[rideKey]?'on':''}`;
+        button.dataset.riderSwitch=rideKey;
+        button.textContent=state.riderSwitch[rideKey]?'Rider Switch ON':'Rider Switch';
+        actions.appendChild(button);
+      }
+      const hint=document.createElement('div');hint.className='tap-hint';hint.textContent='Tap card for ride guide';front.appendChild(hint);
+      const back=document.createElement('div');back.className='ride-card-face ride-card-back';
+      const flags=(guide.flags||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join('');
+      back.innerHTML=`<div class="ride-guide-top"><div><div class="eyebrow">WHAT IS IT?</div><div class="ride-guide-type">${esc(guide.type)}</div></div><div class="ride-guide-intensity">${esc(guide.intensity)}</div></div><div class="ride-guide-summary">${esc(guide.summary)}</div><div class="ride-guide-flags">${flags}</div><div class="ride-guide-foot">About ${experienceMinutes(meta)}m experience time in Dispatcher · tap again to return to live wait and controls.</div>`;
+      row.append(front,back);
+      row.addEventListener('click',e=>{
+        if(e.target.closest('button,input,select,a,label'))return;
+        row.classList.toggle('flipped');
+      });
+    });
+  }
