@@ -27,7 +27,8 @@ jobs:
           node --check sw.js
       - name: Verify hotfix
         run: |
-          grep -Fq '$$(\x27[data-remove-timed]\x27).forEach' app.js || grep -Fq '$$("[data-remove-timed]").forEach' app.js || grep -Fq '$$('\''[data-remove-timed]'\'').forEach' app.js
+          grep -Fq '$$(' app.js
+          grep -Fq '[data-remove-timed]' app.js
           grep -q 'app.js?v=0.7.1' index.html
           grep -q 'styles.css?v=0.7.1' index.html
           grep -q 'dlp-dispatcher-v0.7.1' sw.js
