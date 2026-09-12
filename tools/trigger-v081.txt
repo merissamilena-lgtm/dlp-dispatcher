@@ -1,2 +1,3 @@
 Apply v0.8.1 selector hotfix.
 Retry with boundary-aware selector validation.
+Retry with explicit query cache-bust fix.
