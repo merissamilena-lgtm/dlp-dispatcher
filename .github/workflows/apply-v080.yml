@@ -19,6 +19,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Repair staged patcher blocks
+        run: node tools/fix-v080-patcher.mjs
+
       - name: Apply v0.8.0 polish pass
         run: node tools/apply-v080.mjs
 
