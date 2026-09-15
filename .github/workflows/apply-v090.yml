@@ -1,0 +1,64 @@
+name: Apply DLP Dispatcher v0.9.0
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/trigger-v090.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build Explore service POIs
+        run: node tools/build-explore-v090.mjs
+      - name: Apply v0.9.0 Explore
+        run: node tools/apply-v090.mjs
+      - name: Validate JavaScript
+        run: |
+          node --check app.js
+          node --check sw.js
+      - name: Verify v0.9.0 Explore anchors
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const app=fs.readFileSync('app.js','utf8');
+          const html=fs.readFileSync('index.html','utf8');
+          const css=fs.readFileSync('styles.css','utf8');
+          const sw=fs.readFileSync('sw.js','utf8');
+          const data=JSON.parse(fs.readFileSync('data/explore-pois.json','utf8'));
+          const checks=[
+            [app,'DLP DISPATCHER STATUS v0.9.0'],
+            [app,'function renderExplore()'],
+            [app,"entityType==='RESTAURANT'"],
+            [app,"entityType==='SHOW'"],
+            [app,"data/explore-pois.json?v=0.9.0"],
+            [html,'data-view="explore"'],
+            [html,'id="viewExplore"'],
+            [html,'Ride, restaurant, show, toilet…'],
+            [css,'/* v0.9.0 Explore + Safari-stable sticky navigation */'],
+            [css,'overflow-x:clip'],
+            [css,'.sticky-nav-wrap{position:-webkit-sticky;position:sticky'],
+            [sw,'dlp-dispatcher-v0.9.0'],
+            [sw,"data/explore-pois.json?v=0.9.0"]
+          ];
+          for(const [source,needle] of checks)if(!source.includes(needle))throw new Error(`Missing ${needle}`);
+          if(!Array.isArray(data.points)||data.points.length<4)throw new Error('Explore POI dataset missing official fallback services');
+          const counts=data.points.reduce((a,p)=>(a[p.kind]=(a[p.kind]||0)+1,a),{});
+          console.log('Explore POI verification:',counts,'total',data.points.length);
+          NODE
+      - name: Commit v0.9.0
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app.js index.html styles.css sw.js README.md data/explore-pois.json
+          git commit -m 'DLP Dispatcher v0.9.0 Explore navigator'
+          git push
