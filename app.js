@@ -218,6 +218,9 @@
   const state = {
     rides: [],
     entities: [],
+    liveEntities: [],
+    explorePois: [],
+    exploreLookup: new Map(),
     source: null,
     sourceUpdated: null,
     secondarySource: null,
@@ -235,6 +238,8 @@
     routingGraph: null,
     activeFilter: 'all',
     activeView: 'now',
+    exploreCategory: 'rides',
+    exploreTarget: loadJSON('dlpExploreTarget', null),
     currentUrgency: 'none',
     search: '',
     priorities: loadJSON('dlpPriorities', {}),
@@ -498,7 +503,7 @@
       const loc = ent.location || {};
       return { id:x.entityId||x.id||keyFor(x.name), name:x.name, park:getPark(ent), area:getArea(ent), status:x.status||'UNKNOWN', wait:Number.isFinite(standby)?standby:null, singleRiderWait:Number.isFinite(single)?single:null, lastUpdated:x.lastUpdated||null, lat:Number(loc.latitude), lon:Number(loc.longitude) };
     });
-    return { rides, entities, source:'ThemeParks.wiki', updated:newestTimestamp(rides) };
+    return { rides, entities, liveEntities:live.liveData||[], source:'ThemeParks.wiki', updated:newestTimestamp(rides) };
   }
 
   async function fetchQueueTimes() {
@@ -526,7 +531,7 @@
       }
     }
     const rides = [...map.values()];
-    return { rides, entities: [], source: 'Queue-Times.com', updated: newestTimestamp(rides) };
+    return { rides, entities: [], liveEntities: [], source: 'Queue-Times.com', updated: newestTimestamp(rides) };
   }
 
   function newestTimestamp(rides) {
@@ -628,6 +633,7 @@
       const secondary = tpw && qt ? qt : null;
       state.rides = primary.rides.filter(r => r.name && !/entry to world of frozen/i.test(r.name));
       state.entities = primary.entities || [];
+      state.liveEntities = primary.liveEntities || [];
       state.source = primary.source;
       state.sourceUpdated = primary.updated;
       state.secondarySource = secondary?.source || null;
@@ -770,9 +776,10 @@
     renderPreviewSummary();
     renderHero();
     renderRecommendations();
-    renderWaitBoard();
+    renderExplore();
     renderSchedule();
     renderSourceAge();
+    renderGuidance();
     activateView(state.activeView,false);
     renderSyncStatus();
   }
@@ -854,6 +861,101 @@
   function deferredRemaining(k){const until=deferredUntil(k);if(!until||until<=Date.now())return 0;return Math.max(1,Math.ceil((until-Date.now())/60000));}
   function waitValueFor(r,m){const fresh=attractionFreshness(r);if(r.status!=='OPERATING')return{text:prettyStatus(r.status),cls:'closed'};if(fresh.level==='stale'||fresh.level==='unknown')return{text:r.wait==null?'OPEN?':`${r.wait} min`,cls:'stale'};if(r.wait==null)return{text:'OPEN · wait unavailable',cls:'open'};const avg=baselineFor(r.name);if(avg==null||!['ride','headline','scenic'].includes(m.category))return{text:`${r.wait} min`,cls:fresh.level==='aging'?'warn':'open'};const delta=avg-r.wait;if(delta>=10)return{text:`${r.wait} min · ${delta}m below avg`,cls:'good'};if(delta<=-10)return{text:`${r.wait} min · ${Math.abs(delta)}m above avg`,cls:'warn'};return{text:`${r.wait} min · near avg`,cls:'open'};}
   function railroadSummary(){const stations=[['Main Street','disneyland railroad main street station'],['Frontierland','disneyland railroad frontierland depot'],['Fantasyland','disneyland railroad fantasyland station'],['Discoveryland','disneyland railroad discoveryland station']];const found=stations.map(([label,pat])=>[label,state.rides.find(r=>norm(r.name).includes(pat))]).filter(x=>x[1]);if(!found.length)return'';const cells=found.map(([label,r])=>{const fresh=attractionFreshness(r),stale=fresh.level==='stale'||fresh.level==='unknown';const val=r.status==='OPERATING'?(r.wait==null?'OPEN':`${r.wait}m`):'CLOSED';const cls=stale?'stale':r.status==='OPERATING'?'open':'closed';return`<span class="rail-station ${cls}"><strong>${label}</strong> ${val}${stale?' · STALE':''}</span>`;}).join('');return`<div class="railroad-strip"><div class="railroad-title">Disneyland Railroad stations</div><div class="railroad-stations">${cells}</div></div>`;}
+  function entityContext(ent){
+    const index=new Map(state.entities.map(e=>[e.id,e]));
+    let x=ent,park=null,area=null,loops=0;
+    while(x&&loops++<12){
+      if(!area&&x.entityType==='LAND')area=canonicalArea(x.name);
+      if(!park&&x.entityType==='PARK')park=canonicalPark(x.name);
+      x=index.get(x.parentId);
+    }
+    return {park:park||inferPark(ent?.name||''),area};
+  }
+  function entityPoint(ent){
+    const loc=ent?.location||{},lat=Number(loc.latitude),lon=Number(loc.longitude);
+    return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null;
+  }
+  function exploreWalkMinutes(item){
+    const lat=Number(item?.lat),lon=Number(item?.lon);if(!Number.isFinite(lat)||!Number.isFinite(lon))return null;
+    const to={lat,lon,park:item.park};
+    let mins=walkMinutes(currentPoint(),to);
+    if(isParkHop(currentPark(),item.park))mins+=PARK_HOP_TIME_MIN;
+    return mins;
+  }
+  function exploreTime(iso){
+    const d=new Date(iso);if(isNaN(d))return null;
+    return new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit',hour12:false}).format(d);
+  }
+  function showLiveFor(id){return state.liveEntities.find(x=>(x.entityId||x.id)===id)||null;}
+  function showSummary(id){
+    const live=showLiveFor(id),times=Array.isArray(live?.showtimes)?live.showtimes:[];
+    const now=Date.now()-5*60000;
+    const upcoming=times.filter(x=>Date.parse(x.startTime)>=now).sort((a,b)=>Date.parse(a.startTime)-Date.parse(b.startTime)).slice(0,3).map(x=>exploreTime(x.startTime)).filter(Boolean);
+    if(upcoming.length)return `Next today: ${upcoming.join(' · ')}`;
+    if(live?.status)return `Live status: ${prettyStatus(live.status)}`;
+    return 'No live showtimes in the current feed. Check Disney for schedule changes.';
+  }
+  function exploreKindLabel(kind){return {food:'FOOD',show:'SHOW',toilet:'TOILETS',baby:'BABY CARE',babychange:'BABY CHANGE',firstaid:'FIRST AID',water:'WATER'}[kind]||'EXPLORE';}
+  function makeEntityExploreItem(ent,kind){
+    const context=entityContext(ent),point=entityPoint(ent)||areaPoint(context.area)||areaPoint(context.park==='Disney Adventure World'?'Disney Adventure World entrance':'Disneyland Park entrance');
+    if(!point)return null;
+    return {id:`entity-${ent.id}`,entityId:ent.id,kind,name:ent.name,park:context.park,area:context.area,lat:point.lat,lon:point.lon,source:'ThemeParks.wiki',tags:[kind,ent.entityType,context.park,context.area].filter(Boolean),note:kind==='show'?showSummary(ent.id):'Disneyland Paris dining entity from the live park-data catalogue.'};
+  }
+  function makePoiExploreItem(p){
+    return {id:`poi-${p.id}`,kind:p.kind,name:p.name,park:p.park,area:p.area,lat:Number(p.lat),lon:Number(p.lon),source:p.source||'Mapped service',tags:p.tags||[],note:p.note||null,precision:p.precision||'mapped'};
+  }
+  function exploreCard(item){
+    const walk=exploreWalkMinutes(item),walkText=walk==null?'route unavailable':`~${walk} min walk`,area=[item.park,item.area].filter(Boolean).join(' · '),flags=(item.tags||[]).filter(x=>!['food','show','RESTAURANT','SHOW',item.park,item.area].includes(x)).slice(0,4);
+    const chips=[`<span class="chip category">${esc(exploreKindLabel(item.kind))}</span>`,area?`<span class="chip">${esc(area)}</span>`:'',...flags.map(x=>`<span class="chip">${esc(String(x))}</span>`)].filter(Boolean).join('');
+    const precision=item.precision==='area'?'<span class="explore-approx">area pin</span>':'';
+    return `<article class="explore-card"><div class="explore-card-top"><div><div class="explore-name">${esc(item.name)}</div><div class="quick-chips">${chips}</div></div><div class="explore-walk">${esc(walkText)}</div></div>${item.note?`<div class="explore-note">${esc(item.note)}</div>`:''}<div class="explore-card-foot"><span>${esc(item.source||'Park data')} ${precision}</span><button class="guide-btn" type="button" data-guide="${esc(item.id)}">Guide me</button></div></article>`;
+  }
+  function setExploreTarget(item){
+    if(!item)return;
+    state.exploreTarget={name:item.name,kind:item.kind,park:item.park,area:item.area,lat:Number(item.lat),lon:Number(item.lon),source:item.source||null};
+    localStorage.setItem('dlpExploreTarget',JSON.stringify(state.exploreTarget));
+    renderGuidance();toast(`Guiding to ${item.name}.`);
+  }
+  function setRideExploreTarget(k){
+    const ride=state.rides.find(r=>keyFor(r.name)===k);if(!ride)return;
+    const p=pointForRide(ride,'entrance'),m=metaFor(ride.name);if(!p)return toast('No route point is available for this attraction.');
+    setExploreTarget({name:ride.name,kind:'ride',park:ride.park,area:ride.area||m.area,lat:p.lat,lon:p.lon,source:'ThemeParks.wiki / routing data'});
+  }
+  function clearExploreTarget(){state.exploreTarget=null;localStorage.removeItem('dlpExploreTarget');renderGuidance();}
+  function renderGuidance(){
+    const bar=$('#guidanceBanner');if(!bar)return;
+    const t=state.exploreTarget;if(!t){bar.hidden=true;bar.innerHTML='';return;}
+    const mins=exploreWalkMinutes(t),cross=isParkHop(currentPark(),t.park),where=[t.park,t.area].filter(Boolean).join(' · ');
+    bar.hidden=false;
+    bar.innerHTML=`<div class="guidance-main"><div class="guidance-label">GUIDING TO</div><strong>${esc(t.name)}</strong><span>${mins==null?'Walking time unavailable':`~${mins} min${cross?' incl. park transfer':''}`} · ${esc(where)}</span></div><button type="button" id="clearGuidance">Clear</button>`;
+    $('#clearGuidance')?.addEventListener('click',clearExploreTarget);
+  }
+  async function loadExploreData(){
+    try{
+      const res=await fetch('data/explore-pois.json?v=0.9.0',{cache:'force-cache'});if(!res.ok)throw new Error(`Explore data ${res.status}`);
+      const data=await res.json();state.explorePois=Array.isArray(data.points)?data.points:[];renderExplore();
+    }catch(e){console.warn('Explore service POIs unavailable',e);state.explorePois=[];renderExplore();}
+  }
+  function renderExplore(){
+    const board=$('#exploreBoard'),ridePanel=$('#rideExplorePanel');if(!board||!ridePanel)return;
+    const cat=state.exploreCategory||'rides',q=norm(state.search);
+    const clear=$('#clearSearch');if(clear)clear.hidden=!state.search;
+    $$('[data-explore-cat]').forEach(b=>b.classList.toggle('active',b.dataset.exploreCat===cat));
+    const showRides=cat==='rides'||cat==='all';ridePanel.hidden=!showRides;
+    if(showRides)renderWaitBoard();
+    state.exploreLookup=new Map();
+    let items=[];
+    if(cat==='all'||cat==='food')items.push(...state.entities.filter(e=>e.entityType==='RESTAURANT').map(e=>makeEntityExploreItem(e,'food')).filter(Boolean));
+    if(cat==='all'||cat==='shows')items.push(...state.entities.filter(e=>e.entityType==='SHOW').map(e=>makeEntityExploreItem(e,'show')).filter(Boolean));
+    if(cat==='all'||cat==='essentials')items.push(...state.explorePois.map(makePoiExploreItem));
+    if(q)items=items.filter(x=>norm([x.name,x.park,x.area,x.kind,...(x.tags||[])].filter(Boolean).join(' ')).includes(q));
+    items.forEach(x=>state.exploreLookup.set(x.id,x));
+    items.sort((a,b)=>(exploreWalkMinutes(a)??999)-(exploreWalkMinutes(b)??999)||a.name.localeCompare(b.name));
+    board.hidden=cat==='rides';
+    board.innerHTML=cat==='rides'?'':items.length?items.map(exploreCard).join(''):`<div class="empty">No ${esc(cat==='all'?'Explore':cat)} results match this search.</div>`;
+    $$('[data-guide]').forEach(b=>b.addEventListener('click',()=>setExploreTarget(state.exploreLookup.get(b.dataset.guide))));
+  }
+
   function renderWaitBoard(){
     const q=norm(state.search),freshRank=r=>({fresh:0,aging:1,unknown:2,stale:3}[attractionFreshness(r).level]??3);
     const clear=$('#clearSearch');if(clear)clear.hidden=!state.search;
@@ -867,6 +969,7 @@
     $$('[data-done]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.done;if(state.done[k])toggleDone(k);else markDoneWithUndo(k);}));
     $$('[data-unsnooze]').forEach(b=>b.addEventListener('click',()=>{delete state.notNow[b.dataset.unsnooze];save();renderAll();toast('Snooze cleared.');}));
     $$('[data-rider-switch]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleRiderSwitch(b.dataset.riderSwitch);}));
+    $$('[data-guide-ride]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();setRideExploreTarget(b.dataset.guideRide);}));
   }
 
   function dynamicKindLabel(c){ return c.kind==='premier'?'PREMIER':c.kind==='show'?'SHOW':c.kind==='other'?'TIMED':''; }
@@ -951,11 +1054,11 @@
   }
 
   function activateView(view,scrollTop=true){
-    const next=view==='rides'?'rides':'now';
+    const next=view==='explore'?'explore':'now';
     state.activeView=next;
-    const now=$('#viewNow'),rides=$('#viewRides');
+    const now=$('#viewNow'),explore=$('#viewExplore');
     if(now)now.hidden=next!=='now';
-    if(rides)rides.hidden=next!=='rides';
+    if(explore)explore.hidden=next!=='explore';
     $$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===next));
     if(scrollTop)window.scrollTo({top:0,behavior:'smooth'});
   }
@@ -979,6 +1082,7 @@
         button.textContent=state.riderSwitch[rideKey]?'Rider Switch ON':'Rider Switch';
         actions.appendChild(button);
       }
+      if(actions){const guide=document.createElement('button');guide.type='button';guide.className='guide-btn';guide.dataset.guideRide=rideKey;guide.textContent='Guide';actions.appendChild(guide);}
       const hint=document.createElement('div');hint.className='tap-hint';hint.textContent='Tap card for ride guide';front.appendChild(hint);
       const back=document.createElement('div');back.className='ride-card-face ride-card-back';
       const flags=(guide.flags||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join('');
@@ -991,10 +1095,11 @@
     });
   }
   function jumpToRide(k) {
-    activateView('rides',false);
-    state.activeFilter = 'all'; state.search = ''; $('#searchInput').value = '';
+    activateView('explore',false);
+    state.exploreCategory='rides'; state.activeFilter='all'; state.search=''; $('#searchInput').value='';
+    $$('[data-explore-cat]').forEach(x=>x.classList.toggle('active',x.dataset.exploreCat==='rides'));
     $$('.filter').forEach(x=>x.classList.toggle('active',x.dataset.filter==='all'));
-    renderWaitBoard();
+    renderExplore();
     requestAnimationFrame(()=>{ const row=document.getElementById(rideRowId(k)); if (row) { row.scrollIntoView({behavior:'smooth',block:'center'}); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1600); } });
   }
   function esc(s='') { return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -1397,7 +1502,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.8.2',
+      'DLP DISPATCHER STATUS v0.9.0',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -1426,7 +1531,7 @@
         ? 'Please re-check current public live data and tell us the best next move, prioritising enjoyment and fixed bookings over raw ride count.'
         : 'TEST PACKET ONLY. Do not treat us as physically at Disneyland Paris. Re-check current public live data only to evaluate whether the dispatcher logic and rankings look sensible.'
     ];
-    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.8.2 status packet copied. Paste it into ChatGPT.'); }
+    try { await navigator.clipboard.writeText(lines.join('\n')); toast('v0.9.0 status packet copied. Paste it into ChatGPT.'); }
     catch { prompt('Copy this status packet:', lines.join('\n')); }
   }
 
@@ -1446,8 +1551,9 @@
     $('#previewToggle').addEventListener('change',e=>{state.settings.preview=e.target.checked;save();renderAll();});
     $('#previewDate').addEventListener('change',e=>{state.settings.previewDate=e.target.value;save();renderAll();});
     $('#previewTime').addEventListener('change',e=>{state.settings.previewTime=e.target.value;save();renderAll();});
-    $('#searchInput').addEventListener('input',e=>{state.search=e.target.value;renderWaitBoard();});
-    $('#clearSearch').addEventListener('click',()=>{state.search='';$('#searchInput').value='';renderWaitBoard();$('#searchInput').focus();});
+    $('#searchInput').addEventListener('input',e=>{state.search=e.target.value;renderExplore();});
+    $('#clearSearch').addEventListener('click',()=>{state.search='';$('#searchInput').value='';renderExplore();$('#searchInput').focus();});
+    $$('[data-explore-cat]').forEach(b=>b.addEventListener('click',()=>{state.exploreCategory=b.dataset.exploreCat;renderExplore();}));
     $$('.filter').forEach(b=>b.addEventListener('click',()=>{state.activeFilter=b.dataset.filter;$$('.filter').forEach(x=>x.classList.toggle('active',x===b));renderWaitBoard();}));
     for (const [id,key] of [['mealBuffer','mealBuffer'],['trainBuffer','trainBuffer'],['walkSpeed','walkSpeed'],['routeFactor','routeFactor']]) {
       $(`#${id}`).addEventListener('change',e=>{state.settings[key]=Number(e.target.value);save();renderAll();});
@@ -1463,11 +1569,11 @@
     $('#testAlertBtn').addEventListener('click',testTripAlert);
   }
 
-  function refreshOnResume(){if(document.visibilityState!=='visible')return;const age=state.lastFetchedAt?(Date.now()-state.lastFetchedAt.getTime()):Infinity;if(age>60000)refreshLive();else{renderSourceAge();renderWaitBoard();}}
+  function refreshOnResume(){if(document.visibilityState!=='visible')return;const age=state.lastFetchedAt?(Date.now()-state.lastFetchedAt.getTime()):Infinity;if(age>60000)refreshLive();else{renderSourceAge();renderExplore();renderGuidance();}}
   initLocationSelect();
   const timedArea=$('#timedOtherArea');if(timedArea)timedArea.innerHTML=Object.entries(AREAS).filter(([,p])=>isThemePark(p.park)).map(([name])=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
   const timedDate=$('#timedDate');if(timedDate)timedDate.value=state.settings.previewDate||'2026-10-30';
-  bind(); updateTimedForm(); renderAll(); loadRoutingData(); refreshLive(); startCloudSyncLoop();
+  bind(); updateTimedForm(); renderAll(); loadRoutingData(); loadExploreData(); refreshLive(); startCloudSyncLoop();
   if(state.sync.token&&state.sync.deviceId&&'serviceWorker'in navigator){navigator.serviceWorker.ready.then(reg=>reg.active?.postMessage({type:'SET_PUSH_CONTEXT',context:{syncToken:state.sync.token,deviceId:state.sync.deviceId}})).catch(()=>{});}
   setInterval(refreshLive, REFRESH_MS);
   setInterval(()=>{renderHero();renderPreviewSummary();renderSourceAge();renderWaitBoard();},60000);

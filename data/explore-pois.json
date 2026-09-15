@@ -1,0 +1,1360 @@
+{
+  "generatedAt": "2026-09-15T09:37:27.225Z",
+  "bbox": {
+    "south": 48.863,
+    "west": 2.77,
+    "north": 48.8768,
+    "east": 2.7878
+  },
+  "source": {
+    "osm": "https://overpass-api.de/api/interpreter",
+    "osmError": null,
+    "official": "Disneyland Paris service-location descriptions"
+  },
+  "points": [
+    {
+      "id": "official-baby-daw",
+      "kind": "baby",
+      "name": "Baby Care Centre",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.86755,
+      "lon": 2.77955,
+      "precision": "area",
+      "source": "Disneyland Paris",
+      "tags": [
+        "baby care",
+        "baby change",
+        "changing",
+        "feeding",
+        "bottle",
+        "microwave",
+        "family"
+      ],
+      "note": "Official Baby Care Centre by Studio Services. Area-level pin: follow Disney signage for the final metres."
+    },
+    {
+      "id": "official-firstaid-daw",
+      "kind": "firstaid",
+      "name": "First Aid",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.86755,
+      "lon": 2.77955,
+      "precision": "area",
+      "source": "Disneyland Paris",
+      "tags": [
+        "first aid",
+        "medical",
+        "health",
+        "help"
+      ],
+      "note": "Official First Aid location near the park entrance / Studio Services. Area-level pin: follow Disney signage for the final metres."
+    },
+    {
+      "id": "osm-node-647896810",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8662524,
+      "lon": 2.7790729,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-node-1041609427",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8683087,
+      "lon": 2.7799986,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-node-13603285943",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8664262,
+      "lon": 2.7753861,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-node-13603285944",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.86421,
+      "lon": 2.7742797,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-1122277982",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8676069,
+      "lon": 2.7765037,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-way-1271516005",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disney Adventure World",
+      "area": "Marvel Avengers Campus",
+      "lat": 48.8658023,
+      "lon": 2.7797541,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-1392173860",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8673369,
+      "lon": 2.779453,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-way-1485764580",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8655053,
+      "lon": 2.7769108,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-way-1485772804",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.867177,
+      "lon": 2.7780351,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-3264483353",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8662953,
+      "lon": 2.7790778,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-4536476765",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8674021,
+      "lon": 2.7794162,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-4536476767",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8671589,
+      "lon": 2.7781143,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-10948564136",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disney Adventure World",
+      "area": "Marvel Avengers Campus",
+      "lat": 48.865762,
+      "lon": 2.7796736,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-12736495122",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8694223,
+      "lon": 2.7799001,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-13654437132",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8655349,
+      "lon": 2.7768516,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-13690566882",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8664327,
+      "lon": 2.7753613,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-13722951939",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disney Adventure World",
+      "area": "Production Courtyard",
+      "lat": 48.8695962,
+      "lon": 2.7800892,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "official-baby-dlp",
+      "kind": "baby",
+      "name": "Baby Care Centre",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.87105,
+      "lon": 2.77974,
+      "precision": "area",
+      "source": "Disneyland Paris",
+      "tags": [
+        "baby care",
+        "baby change",
+        "changing",
+        "feeding",
+        "bottle",
+        "microwave",
+        "family"
+      ],
+      "note": "Official Baby Care Centre near Plaza Gardens. Area-level pin: follow Disney signage for the final metres."
+    },
+    {
+      "id": "official-firstaid-dlp",
+      "kind": "firstaid",
+      "name": "First Aid",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.87105,
+      "lon": 2.77974,
+      "precision": "area",
+      "source": "Disneyland Paris",
+      "tags": [
+        "first aid",
+        "medical",
+        "health",
+        "help"
+      ],
+      "note": "Official First Aid location on Main Street U.S.A. Area-level pin: follow Disney signage for the final metres."
+    },
+    {
+      "id": "osm-node-620494098",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8712497,
+      "lon": 2.7792924,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-node-2285894427",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8702742,
+      "lon": 2.7787088,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-node-2645314955",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Fantasyland",
+      "lat": 48.8745729,
+      "lon": 2.7781633,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-node-12736576480",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8702821,
+      "lon": 2.7822811,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-way-40362812",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8718389,
+      "lon": 2.7726257,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-49733825",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Discoveryland",
+      "lat": 48.8727285,
+      "lon": 2.785496,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-204210433",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Fantasyland",
+      "lat": 48.872924,
+      "lon": 2.7789513,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-300299795",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Fantasyland",
+      "lat": 48.8740064,
+      "lon": 2.7765728,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-way-1165411513",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.870718,
+      "lon": 2.7825757,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-way-1223547447",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8719418,
+      "lon": 2.7759658,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-1223755265",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Frontierland",
+      "lat": 48.8712242,
+      "lon": 2.7769652,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-1226302854",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8715391,
+      "lon": 2.7739289,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-1237114457",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8740913,
+      "lon": 2.7735134,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-1240805706",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8726737,
+      "lon": 2.7754291,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-1267201551",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8733207,
+      "lon": 2.7744586,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-1271423714",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8706424,
+      "lon": 2.7784236,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "baby change",
+        "changing",
+        "baby",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": "Mapped toilets with baby-changing information."
+    },
+    {
+      "id": "osm-way-1355343102",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Frontierland",
+      "lat": 48.8718579,
+      "lon": 2.7785619,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-way-1355437019",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Frontierland",
+      "lat": 48.8713487,
+      "lon": 2.7775853,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-way-1355437023",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Frontierland",
+      "lat": 48.8722132,
+      "lon": 2.7780831,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-way-1466595238",
+      "kind": "toilet",
+      "name": "Toilets",
+      "park": "Disneyland Park",
+      "area": "Discoveryland",
+      "lat": 48.8696842,
+      "lon": 2.7848472,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-way-1165411510",
+      "kind": "toilet",
+      "name": "Toilettes",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8705418,
+      "lon": 2.7825472,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "toilet",
+        "toilets",
+        "restroom",
+        "bathroom",
+        "loo",
+        "wc"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-3452357590",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8700792,
+      "lon": 2.7805931,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-3591612964",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8712142,
+      "lon": 2.7787115,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-3591612965",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Fantasyland",
+      "lat": 48.8729434,
+      "lon": 2.7788457,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-4536454507",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8707654,
+      "lon": 2.7793513,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-4536454508",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8706418,
+      "lon": 2.7791341,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-4536456248",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8711411,
+      "lon": 2.7785628,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-4536463413",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8715331,
+      "lon": 2.7740554,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-4536467526",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8741623,
+      "lon": 2.7736569,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-6695466450",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.872592,
+      "lon": 2.7755012,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-6695479709",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8725214,
+      "lon": 2.7736432,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-9943177533",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8734104,
+      "lon": 2.774391,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-9943177534",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8726753,
+      "lon": 2.7753926,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-9976655712",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Fantasyland",
+      "lat": 48.8740623,
+      "lon": 2.776628,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-11253398346",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Frontierland",
+      "lat": 48.8707709,
+      "lon": 2.7772455,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-11253398349",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8719425,
+      "lon": 2.7760003,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-12091666907",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8714033,
+      "lon": 2.7752347,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-12091840823",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Fantasyland",
+      "lat": 48.8723914,
+      "lon": 2.7779312,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-12102471094",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.871685,
+      "lon": 2.775168,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-12102748563",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8712107,
+      "lon": 2.7793176,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-12376000011",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8701117,
+      "lon": 2.7827753,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-12725945685",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Fantasyland",
+      "lat": 48.8726257,
+      "lon": 2.7775175,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-12736576003",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8701574,
+      "lon": 2.7810095,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-13135810401",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Adventureland",
+      "lat": 48.8712425,
+      "lon": 2.7746667,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill"
+      ],
+      "note": null
+    },
+    {
+      "id": "osm-node-13722951940",
+      "kind": "water",
+      "name": "Drinking water",
+      "park": "Disneyland Park",
+      "area": "Main Street U.S.A.",
+      "lat": 48.8700071,
+      "lon": 2.7807745,
+      "precision": "mapped",
+      "source": "OpenStreetMap",
+      "tags": [
+        "water",
+        "drinking water",
+        "refill",
+        "wheelchair",
+        "accessible"
+      ],
+      "note": null
+    }
+  ]
+}

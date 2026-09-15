@@ -10,11 +10,11 @@
   <title>DLP Dispatcher</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=0.8.2" />
+  <link rel="stylesheet" href="styles.css?v=0.9.0" />
 </head>
 <body>
   <header class="topbar">
-    <div><div class="eyebrow">30 Oct to 2 Nov 2026 · v0.8.2</div><h1>DLP Dispatcher</h1></div>
+    <div><div class="eyebrow">30 Oct to 2 Nov 2026 · v0.9.0</div><h1>DLP Dispatcher</h1></div>
     <div class="status-pill" id="liveStatus"><span class="dot"></span><span>Connecting</span></div>
   </header>
   <main>
@@ -28,10 +28,13 @@
       <div class="top-updated" id="topUpdated">Waiting for live data</div>
     </section>
 
-    <nav class="view-tabs" aria-label="Dispatcher views">
-      <button class="view-tab active" type="button" data-view="now">Now</button>
-      <button class="view-tab" type="button" data-view="rides">Rides</button>
-    </nav>
+    <div class="sticky-nav-wrap">
+      <nav class="view-tabs" aria-label="Dispatcher views">
+        <button class="view-tab active" type="button" data-view="now">Now</button>
+        <button class="view-tab" type="button" data-view="explore">Explore</button>
+      </nav>
+      <div class="guidance-banner" id="guidanceBanner" hidden></div>
+    </div>
 
     <div id="viewNow" class="view-panel">
       <section class="hero card"><div class="hero-top"><div><div class="label">NEXT TIMED POINT</div><div class="commitment-name" id="nextName">No trip commitment active</div><div class="muted" id="nextMeta">Live queues still work. Use Preview to test trip deconfliction.</div></div><div class="countdown" id="countdown">--</div></div><div class="urgency-badge" id="urgencyBadge" hidden></div><div class="safe-line" id="safeLine">Recommendations are not time-blocked outside the trip dates.</div><div class="button-row"><button class="primary" id="refreshBtn">Refresh live</button><button id="gpsBtn">Use my location</button><button id="copyBtn">Copy ChatGPT packet</button></div></section>
@@ -57,11 +60,11 @@
       <section class="card note-card"><strong>Operating rule:</strong> never risk a timed booking for one more attraction. The engine estimates walking, queueing, realistic experience time, Rider Switch where selected and onward travel, then rejects anything that does not fit with the selected buffer.</section>
     </div>
 
-    <div id="viewRides" class="view-panel" hidden>
-      <section><div class="section-heading waits-heading"><div><div class="eyebrow">LIVE BOARD</div><h2>Rides</h2><div class="muted small rides-help">Browse when you want to. Tap a ride card to flip it over for a plain-English description.</div></div><div class="search-wrap"><input class="search" id="searchInput" type="search" placeholder="Search attractions" /><button class="search-clear" id="clearSearch" type="button" hidden>Clear</button></div></div><div class="filter-row"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="Disneyland Park">Disneyland Park</button><button class="filter" data-filter="Disney Adventure World">Adventure World</button><button class="filter" data-filter="done">Done</button></div><div id="waitBoard" class="wait-board"></div></section>
+    <div id="viewExplore" class="view-panel" hidden>
+      <section><div class="section-heading waits-heading explore-heading"><div><div class="eyebrow">PARK NAVIGATOR</div><h2>Explore</h2><div class="muted small rides-help">Search the parks, not just the rides. Food, shows and useful family stuff live here too.</div></div><div class="search-wrap"><input class="search" id="searchInput" type="search" placeholder="Ride, restaurant, show, toilet…" /><button class="search-clear" id="clearSearch" type="button" hidden>Clear</button></div></div><div class="explore-cats"><button class="explore-cat" data-explore-cat="all">All</button><button class="explore-cat active" data-explore-cat="rides">Rides</button><button class="explore-cat" data-explore-cat="food">Food</button><button class="explore-cat" data-explore-cat="shows">Shows</button><button class="explore-cat" data-explore-cat="essentials">Essentials</button></div><div id="exploreBoard" class="explore-board" hidden></div><div id="rideExplorePanel"><div class="filter-row"><button class="filter active" data-filter="all">All rides</button><button class="filter" data-filter="Disneyland Park">Disneyland Park</button><button class="filter" data-filter="Disney Adventure World">Adventure World</button><button class="filter" data-filter="done">Done</button></div><div id="waitBoard" class="wait-board"></div></div></section>
     </div>
   </main>
   <footer><div>Independent trip tool, not affiliated with Disney.</div><div>Primary live data: <a href="https://themeparks.wiki/" target="_blank" rel="noreferrer">ThemeParks.wiki</a>. Secondary cross-check: <a href="https://queue-times.com/" target="_blank" rel="noreferrer">Powered by Queue-Times.com</a> via the DLP Dispatcher proxy.</div></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastUndo" type="button" hidden>Undo</button></div>
-  <script src="app.js?v=0.8.2"></script>
+  <script src="app.js?v=0.9.0"></script>
 </body></html>
