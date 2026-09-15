@@ -21,7 +21,7 @@ jobs:
       - name: Build Explore service POIs
         run: node tools/build-explore-v090.mjs
       - name: Apply v0.9.0 Explore
-        run: node tools/apply-v090.mjs
+        run: node tools/apply-v090b.mjs
       - name: Validate JavaScript
         run: |
           node --check app.js
