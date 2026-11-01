@@ -250,6 +250,11 @@
     notNow: loadJSON('dlpNotNow', {}),
     riderSwitch: loadJSON('dlpRiderSwitch', {}),
     dynamicCommitments: loadJSON('dlpDynamicCommitments', []),
+    queueWatchEnabled: loadJSON('dlpQueueWatchEnabled', false) === true,
+    queueWatchSamples: loadJSON('dlpQueueWatchSamples', {}),
+    queueWatchFired: loadJSON('dlpQueueWatchFired', {}),
+    queueWatchHistory: loadJSON('dlpQueueWatchHistory', []),
+    queueWatchDismissedAt: 0,
     sync: Object.assign({
       token: localStorage.getItem(SYNC_TOKEN_KEY) || '',
       revision: 0,
@@ -645,6 +650,7 @@
       state.feedDisagreements = secondary ? compareFeeds(state.rides, secondary.rides) : [];
       state.lastFetchedAt = new Date();
       enhanceRidesFromEntities();
+      checkQueueWatch();
 
       const freshness = feedFreshness();
       const statusText = !tpw ? 'Fallback live' : freshness.level === 'stale' ? 'Live data stale' : 'Live';
@@ -786,6 +792,114 @@
     renderGuidance();
     activateView(state.activeView,false);
     renderSyncStatus();
+    renderQueueWatch();
+  }
+
+  // Queue Watch is foreground-only until background cloud push is independently deployed and verified.
+  const QUEUE_WATCH_DROP_MIN=15;
+  const QUEUE_WATCH_LOW_MIN=20;
+  const QUEUE_WATCH_MAX_MIN=45;
+  const QUEUE_WATCH_COOLDOWN_MS=45*60000;
+  const QUEUE_WATCH_SAMPLE_MAX_AGE_MS=30*60000;
+
+  function persistQueueWatch(){
+    localStorage.setItem('dlpQueueWatchEnabled',JSON.stringify(!!state.queueWatchEnabled));
+    localStorage.setItem('dlpQueueWatchSamples',JSON.stringify(state.queueWatchSamples));
+    localStorage.setItem('dlpQueueWatchFired',JSON.stringify(state.queueWatchFired));
+    localStorage.setItem('dlpQueueWatchHistory',JSON.stringify(state.queueWatchHistory.slice(0,8)));
+  }
+  function queueWatchRides(){
+    return state.rides.filter(r=>['want','must'].includes(state.priorities[keyFor(r.name)])&&!state.done[keyFor(r.name)]);
+  }
+  function renderQueueWatch(){
+    const toggle=$('#queueWatchToggle'),status=$('#queueWatchStatus'),test=$('#queueWatchTest'),alert=$('#queueWatchAlert'),history=$('#queueWatchHistory');
+    if(!toggle||!status)return;
+    toggle.checked=!!state.queueWatchEnabled;
+    const count=queueWatchRides().length;
+    status.textContent=!state.queueWatchEnabled?'OFF · No queue-drop monitoring':
+      state.settings.preview?'ON · Paused during Preview':
+      sessionMode()!=='LIVE'?'ON · Awaiting in-park LIVE GPS':
+      'ON · Watching '+count+' WANT/MUST '+(count===1?'ride':'rides')+' · checks about every 5 minutes while open';
+    if(test)test.hidden=!state.queueWatchEnabled;
+    const newest=state.queueWatchHistory&&state.queueWatchHistory[0];
+    if(alert){
+      const visible=!!state.queueWatchEnabled&&!!newest&&newest.at>state.queueWatchDismissedAt;
+      alert.hidden=!visible;
+      if(visible){
+        $('#queueWatchAlertTitle').textContent=newest.test?'Queue Watch test':newest.name+' queue dropped!';
+        $('#queueWatchAlertDetail').textContent=newest.test?'This is how an opportunity alert appears.':
+          newest.previous+' → '+newest.current+' min standby · '+newest.priority.toUpperCase()+' · Check the actual queue before setting off.';
+      }
+    }
+    if(history){
+      history.textContent=(state.queueWatchHistory||[]).slice(0,3).map(h=>
+        h.test?'Test notification':h.name+': '+h.previous+' → '+h.current+' min').join(' · ');
+    }
+  }
+  function toggleQueueWatch(e){
+    state.queueWatchEnabled=!!e.target.checked;
+    state.queueWatchSamples={}; // always take a fresh baseline when re-enabled
+    state.queueWatchDismissedAt=Date.now();
+    persistQueueWatch();
+    renderQueueWatch();
+    toast(state.queueWatchEnabled?'Queue Watch ON. Checking WANT/MUST rides while Dispatcher is open.':'Queue Watch OFF. No further queue alerts.');
+    if(state.queueWatchEnabled&&standalonePwa()&&typeof Notification!=='undefined'&&Notification.permission==='default'){
+      Notification.requestPermission().then(()=>renderQueueWatch()).catch(()=>{});
+    }
+  }
+  function queueWatchNotify(entry){
+    if(!state.queueWatchEnabled)return;
+    renderQueueWatch();
+    toast(entry.test?'Queue Watch test alert':entry.name+': '+entry.previous+' → '+entry.current+'m!');
+    if(typeof navigator==='undefined'||!('serviceWorker'in navigator)||typeof Notification==='undefined'||Notification.permission!=='granted')return;
+    navigator.serviceWorker.ready.then(reg=>reg.showNotification(
+      entry.test?'DLP Dispatcher · Queue Watch test':'🏰 '+entry.name+' queue dropped',
+      {body:entry.test?'Queue Watch is on. This is a test alert.':
+       'Standby '+entry.previous+' → '+entry.current+' min. Check the queue and your next timed plan.',
+       tag:entry.test?'dlp-queue-watch-test':'dlp-queue-watch-'+entry.key,
+       icon:'icon.svg',badge:'icon.svg',data:{url:'./'}}
+    )).catch(err=>console.warn('Queue Watch device notification unavailable',err));
+  }
+  function testQueueWatch(){
+    if(!state.queueWatchEnabled)return;
+    const entry={test:true,name:'Queue Watch',at:Date.now()};
+    state.queueWatchHistory=[entry,...state.queueWatchHistory].slice(0,8);
+    persistQueueWatch();queueWatchNotify(entry);
+  }
+  function checkQueueWatch(){
+    if(!state.queueWatchEnabled||document.visibilityState!=='visible'||state.settings.preview||sessionMode()!=='LIVE')return;
+    const now=Date.now(), next=nextCommitment(plannerNow()),samples=state.queueWatchSamples;
+    const watched=queueWatchRides();
+    const keys=new Set(watched.map(r=>keyFor(r.name)));
+    for(const key of Object.keys(samples))if(!keys.has(key))delete samples[key];
+    const alerts=[];
+    for(const ride of watched){
+      const key=keyFor(ride.name);
+      if(ride.status!=='OPERATING'||!Number.isFinite(ride.wait)||ride.wait<0)continue;
+      if(attractionFreshness(ride).level!=='fresh'||ride.feedDisagreement)continue;
+      if(isParkHop(currentPark(),ride.park)&&!state.settings.parkHop)continue;
+      const timestamp=Date.parse(ride.lastUpdated);
+      if(!Number.isFinite(timestamp))continue;
+      const old=samples[key];
+      if(old&&old.timestamp>=timestamp&&old.source===state.source)continue;
+      samples[key]={wait:ride.wait,timestamp,observed:now,source:state.source};
+      if(!old||old.source!==state.source||now-old.observed>QUEUE_WATCH_SAMPLE_MAX_AGE_MS||timestamp<=old.timestamp)continue;
+      const drop=old.wait-ride.wait;
+      const crossedLow=old.wait>QUEUE_WATCH_LOW_MIN&&ride.wait<=QUEUE_WATCH_LOW_MIN;
+      if(!(drop>=QUEUE_WATCH_DROP_MIN||crossedLow)||ride.wait>QUEUE_WATCH_MAX_MIN)continue;
+      if(now-Number(state.queueWatchFired[key]||0)<QUEUE_WATCH_COOLDOWN_MS)continue;
+      if(!evaluateRide(ride,plannerNow(),next))continue;
+      alerts.push({key,name:ride.name,previous:old.wait,current:ride.wait,priority:state.priorities[key],at:now});
+    }
+    if(alerts.length){
+      alerts.sort((a,b)=>a.current-b.current||(b.previous-b.current)-(a.previous-a.current));
+      const chosen=alerts[0];
+      for(const a of alerts)state.queueWatchFired[a.key]=now;
+      state.queueWatchHistory=[chosen,...state.queueWatchHistory].slice(0,8);
+      persistQueueWatch();
+      queueWatchNotify(chosen);
+    }else persistQueueWatch();
+    renderQueueWatch();
   }
 
   function renderSession() {
@@ -1046,6 +1160,7 @@
     const cur = state.priorities[k] || 'neutral';
     const next = order[(order.indexOf(cur)+1)%order.length];
     if (next === 'neutral') delete state.priorities[k]; else state.priorities[k]=next;
+    if(!['want','must'].includes(state.priorities[k])){delete state.queueWatchSamples[k];persistQueueWatch();}
     save(); renderAll();
   }
   function toggleDone(k) { state.done[k] = !state.done[k]; if (!state.done[k]) delete state.done[k]; save(); renderAll(); }
@@ -1519,7 +1634,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.9.2',
+      'DLP DISPATCHER STATUS v0.9.3',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -1556,6 +1671,9 @@
     $('#refreshBtn').addEventListener('click',refreshLive);
     $('#gpsBtn').addEventListener('click',useGPS);
     $('#copyBtn').addEventListener('click',copyPacket);
+    $('#queueWatchToggle').addEventListener('change',toggleQueueWatch);
+    $('#queueWatchTest').addEventListener('click',testQueueWatch);
+    $('#queueWatchDismiss').addEventListener('click',()=>{state.queueWatchDismissedAt=Date.now();renderQueueWatch();});
     $$('[data-view]').forEach(b=>b.addEventListener('click',()=>activateView(b.dataset.view)));
     $('#locationSelect').addEventListener('change',e=>{ if(state.gpsWatchId!=null){navigator.geolocation.clearWatch(state.gpsWatchId);state.gpsWatchId=null;}state.gps=null;state.gpsAccuracy=null;state.gpsLastFixAt=null;state.settings.location=e.target.value;state.settings.locationSource='manual';$('#gpsBtn').textContent='Use my location';save();renderAll(); });
     $('#modeSelect').addEventListener('change',e=>{state.settings.mode=e.target.value;save();renderAll();});
