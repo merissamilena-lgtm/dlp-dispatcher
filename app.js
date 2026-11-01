@@ -53,6 +53,8 @@
     { id: 'pym', date: '2026-10-31', time: '12:30', name: 'PYM Kitchen', area: 'Marvel Avengers Campus', kind: 'meal', hard: true },
     { id: 'silver', date: '2026-10-31', time: '18:30', name: 'Silver Spur Steakhouse', area: 'Frontierland', kind: 'meal', hard: true },
     { id: 'nordic', date: '2026-11-01', time: '13:00', name: 'Nordic Crowns Tavern', area: 'World of Frozen', kind: 'meal', hard: false },
+    { id: 'princess-cavalcade', date: '2026-11-01', time: '13:50', name: 'Disney Princess Cavalcade', area: 'Adventure Way', routingArea: 'World of Frozen', locationNote: 'Adventure Way beside the lake; route anchor is approximate, choose a viewing spot', kind: 'show', buffer: 25, hard: true },
+    { id: 'mickey-halloween', date: '2026-11-01', time: '15:25', name: "Mickey's Halloween Celebration", area: 'Main Street U.S.A.', locationNote: 'Parade route towards Central Plaza and Main Street; select a viewing spot', kind: 'show', buffer: 30, hard: true },
     { id: 'remy', date: '2026-11-01', time: '18:30', name: 'Bistrot Chez Rémy', area: 'Worlds of Pixar', kind: 'meal', hard: true },
     { id: 'train', date: '2026-11-02', time: '18:50', name: 'Train from Marne-la-Vallée Chessy', area: 'Marne-la-Vallée Chessy station', kind: 'train', hard: true }
   ];
@@ -398,8 +400,9 @@
       if(ride)return pointForRide(ride,'entrance');
     }
     if(c.point&&Number.isFinite(Number(c.point.lat))&&Number.isFinite(Number(c.point.lon)))return {lat:Number(c.point.lat),lon:Number(c.point.lon),park:c.point.park||areaPoint(c.area)?.park};
+    const routeArea=c.routingArea||c.area;
     const p=precisionRoutingEnabled()?state.routingLocations?.commitments?.[c.id]?.entrance:null;
-    return p?{lat:p.lat,lon:p.lon,park:areaPoint(c.area)?.park}:areaPoint(c.area);
+    return p?{lat:p.lat,lon:p.lon,park:areaPoint(routeArea)?.park}:areaPoint(routeArea);
   }
   async function loadRoutingData(){
     try{
@@ -1516,7 +1519,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.9.1',
+      'DLP DISPATCHER STATUS v0.9.2',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
