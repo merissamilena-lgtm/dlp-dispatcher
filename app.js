@@ -232,6 +232,7 @@
     gpsAccuracy: null,
     gpsWatchId: null,
     gpsLastRenderAt: 0,
+    gpsLastFixAt: null,
     routingReady: false,
     routingError: null,
     routingLocations: null,
@@ -791,7 +792,10 @@
     $('#sessionMode').textContent = live ? 'LIVE MODE' : 'TEST MODE';
     if (live) {
       const near = nearestArea(state.gps);
-      $('#sessionDetail').textContent = `GPS confirms you are at Disneyland Paris near ${near.name}. Live routing is enabled.`;
+      const age=state.gpsLastFixAt?Math.max(0,Math.round((Date.now()-state.gpsLastFixAt)/1000)):null;
+      $('#sessionDetail').textContent = age!=null&&age>120
+        ? `Last GPS fix ${age}s ago (±${Math.round(state.gpsAccuracy||0)}m). Position may be stale. Tap Use my location to refresh.`
+        : `Live GPS position ±${Math.round(state.gpsAccuracy||0)}m${age!=null?`, updated ${age}s ago`:''}. Nearest named area: ${near.name} (approximate label, not a snapped position).`;
     } else if (state.settings.preview) {
       $('#sessionDetail').textContent = 'Preview clock is active. This is a simulation using current queue data.';
     } else if (state.gps) {
@@ -1359,7 +1363,17 @@
     $('#trainBuffer').value = state.settings.trainBuffer;
     $('#walkSpeed').value = state.settings.walkSpeed;
     $('#routeFactor').value = state.settings.routeFactor;
-    if (!gpsNearDLP()) $('#locationSelect').value = state.settings.location;
+    const locationSelect=$('#locationSelect');
+    if(gpsNearDLP()){
+      let gpsOption=locationSelect.querySelector('option[value="__gps__"]');
+      if(!gpsOption){gpsOption=document.createElement('option');gpsOption.value='__gps__';locationSelect.insertBefore(gpsOption,locationSelect.firstChild);}
+      const age=state.gpsLastFixAt?Math.max(0,Math.round((Date.now()-state.gpsLastFixAt)/1000)):null;
+      gpsOption.textContent=`GPS position · ±${Math.round(state.gpsAccuracy||0)}m${age!=null?` · ${age}s old`:''}`;
+      locationSelect.value='__gps__';
+    }else{
+      locationSelect.querySelector('option[value="__gps__"]')?.remove();
+      locationSelect.value=state.settings.location;
+    }
   }
 
   function initLocationSelect() {
@@ -1375,7 +1389,7 @@
     state.gpsWatchId=navigator.geolocation.watchPosition(pos=>{
       const accuracy=Number(pos.coords.accuracy||999),next={lat:pos.coords.latitude,lon:pos.coords.longitude,park:null};
       if(!first&&accuracy>80&&Number(state.gpsAccuracy||999)<40)return;
-      const moved=state.gps?haversine(state.gps,next):Infinity,now=Date.now();state.gps=next;state.gpsAccuracy=accuracy;
+      const moved=state.gps?haversine(state.gps,next):Infinity,now=Date.now();state.gps=next;state.gpsAccuracy=accuracy;state.gpsLastFixAt=Number(pos.timestamp)||now;
       const near=nearestArea(state.gps),inPark=gpsNearDLP();$('#gpsBtn').disabled=false;
       if(inPark){$('#gpsBtn').textContent=`GPS live · ±${Math.round(accuracy)}m`;if(first)toast(`LIVE GPS tracking near ${near.name}`);}
       else{$('#gpsBtn').textContent='GPS: outside DLP';if(first)toast(`GPS is ${(gpsDistanceFromDLP()/1000).toFixed(1)} km from DLP. Staying in TEST mode.`);navigator.geolocation.clearWatch(state.gpsWatchId);state.gpsWatchId=null;}
@@ -1480,12 +1494,12 @@
     const now = plannerNow(), c = nextCommitment(now), allRecs = allRecommendations(), recs = allRecs.slice(0,3), nextRecs = allRecs.slice(3,6);
     const live = sessionMode() === 'LIVE';
     const near = state.gps ? nearestArea(state.gps) : null;
-    const location = live ? `GPS near ${near.name}` : state.settings.location;
+    const location = live ? `GPS coordinates ${state.gps.lat.toFixed(5)}, ${state.gps.lon.toFixed(5)}; approximate nearest named area: ${near.name}` : state.settings.location;
     const doneKeys = Object.keys(state.done).filter(k=>state.done[k]);
     const doneNames = doneKeys.map(k => state.rides.find(r => keyFor(r.name) === k)?.name || k);
     const fresh = feedFreshness();
     let sessionDetail;
-    if (live) sessionDetail = `GPS confirmed within Disneyland Paris; accuracy about ${Math.round(state.gpsAccuracy || 0)}m`;
+    if (live) sessionDetail = `GPS within Disneyland Paris; accuracy about ${Math.round(state.gpsAccuracy || 0)}m; last fix ${state.gpsLastFixAt?Math.round((Date.now()-state.gpsLastFixAt)/1000):'unknown'}s ago`;
     else if (state.settings.preview) sessionDetail = 'TEST MODE; preview simulation; physical park presence is not used';
     else if (state.gps) sessionDetail = `NOT PHYSICALLY IN PARK CONFIRMED; GPS ${(gpsDistanceFromDLP()/1000).toFixed(1)} km from DLP`;
     else sessionDetail = 'TEST MODE; physical park presence unconfirmed because there is no in-resort GPS fix';
@@ -1502,7 +1516,7 @@
     }
 
     const lines = [
-      'DLP DISPATCHER STATUS v0.9.0',
+      'DLP DISPATCHER STATUS v0.9.1',
       `Session: ${live ? 'LIVE' : 'TEST'}`,
       `Session detail: ${sessionDetail}`,
       `Paris time: ${parisDateKey(now)} ${parisTime(now)}${state.settings.preview?' (preview clock)':''}`,
@@ -1540,7 +1554,7 @@
     $('#gpsBtn').addEventListener('click',useGPS);
     $('#copyBtn').addEventListener('click',copyPacket);
     $$('[data-view]').forEach(b=>b.addEventListener('click',()=>activateView(b.dataset.view)));
-    $('#locationSelect').addEventListener('change',e=>{ state.gps=null; state.gpsAccuracy=null; state.settings.location=e.target.value; state.settings.locationSource='manual'; $('#gpsBtn').textContent='Use my location'; save(); renderAll(); });
+    $('#locationSelect').addEventListener('change',e=>{ if(state.gpsWatchId!=null){navigator.geolocation.clearWatch(state.gpsWatchId);state.gpsWatchId=null;}state.gps=null;state.gpsAccuracy=null;state.gpsLastFixAt=null;state.settings.location=e.target.value;state.settings.locationSource='manual';$('#gpsBtn').textContent='Use my location';save();renderAll(); });
     $('#modeSelect').addEventListener('change',e=>{state.settings.mode=e.target.value;save();renderAll();});
     $('#singleRiderToggle').addEventListener('change',e=>{state.settings.singleRider=e.target.checked;save();renderAll();});
     $('#parkHopToggle').addEventListener('change',e=>{state.settings.parkHop=e.target.checked;save();renderAll();});
@@ -1576,7 +1590,7 @@
   bind(); updateTimedForm(); renderAll(); loadRoutingData(); loadExploreData(); refreshLive(); startCloudSyncLoop();
   if(state.sync.token&&state.sync.deviceId&&'serviceWorker'in navigator){navigator.serviceWorker.ready.then(reg=>reg.active?.postMessage({type:'SET_PUSH_CONTEXT',context:{syncToken:state.sync.token,deviceId:state.sync.deviceId}})).catch(()=>{});}
   setInterval(refreshLive, REFRESH_MS);
-  setInterval(()=>{renderHero();renderPreviewSummary();renderSourceAge();renderWaitBoard();},60000);
+  setInterval(()=>{renderHero();renderPreviewSummary();renderSourceAge();renderWaitBoard();syncControls();renderSession();renderGuidance();},60000);
   document.addEventListener('visibilitychange',refreshOnResume);
   window.addEventListener('pageshow',refreshOnResume);
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
