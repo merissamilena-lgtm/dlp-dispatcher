@@ -10,11 +10,11 @@
   <title>DLP Dispatcher</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=0.9.2" />
+  <link rel="stylesheet" href="styles.css?v=0.9.3" />
 </head>
 <body>
   <header class="topbar">
-    <div><div class="eyebrow">30 Oct to 2 Nov 2026 · v0.9.2</div><h1>DLP Dispatcher</h1></div>
+    <div><div class="eyebrow">30 Oct to 2 Nov 2026 · v0.9.3</div><h1>DLP Dispatcher</h1></div>
     <div class="status-pill" id="liveStatus"><span class="dot"></span><span>Connecting</span></div>
   </header>
   <main>
@@ -38,6 +38,22 @@
 
     <div id="viewNow" class="view-panel">
       <section class="hero card"><div class="hero-top"><div><div class="label">NEXT TIMED POINT</div><div class="commitment-name" id="nextName">No trip commitment active</div><div class="muted" id="nextMeta">Live queues still work. Use Preview to test trip deconfliction.</div></div><div class="countdown" id="countdown">--</div></div><div class="urgency-badge" id="urgencyBadge" hidden></div><div class="safe-line" id="safeLine">Recommendations are not time-blocked outside the trip dates.</div><div class="button-row"><button class="primary" id="refreshBtn">Refresh live</button><button id="gpsBtn">Use my location</button><button id="copyBtn">Copy ChatGPT packet</button></div></section>
+
+      <section class="card queue-watch-card" aria-label="Queue Watch">
+        <div class="queue-watch-head">
+          <div><div class="eyebrow">OPPORTUNITY ALERTS</div><h2>Queue Watch <span class="queue-watch-beta">TRIAL</span></h2></div>
+          <label class="queue-watch-switch"><input type="checkbox" id="queueWatchToggle" role="switch" aria-label="Enable Queue Watch"/><span>ON / OFF</span></label>
+        </div>
+        <p id="queueWatchStatus" class="muted small" aria-live="polite">OFF · No queue-drop monitoring</p>
+        <p class="muted tiny">Watches WANT and MUST rides. Alerts on a 15-minute queue drop or a fall to 20 minutes or less, if the ride fits before your next protected booking. Checks about every 5 minutes while Dispatcher is open. Stops immediately when switched off.</p>
+        <div class="button-row"><button type="button" id="queueWatchTest" hidden>Test notification</button></div>
+        <div class="queue-watch-alert" id="queueWatchAlert" role="status" aria-live="polite" hidden>
+          <div><strong id="queueWatchAlertTitle"></strong><p id="queueWatchAlertDetail"></p></div>
+          <button type="button" id="queueWatchDismiss">Dismiss</button>
+        </div>
+        <p class="muted tiny queue-watch-history" id="queueWatchHistory"></p>
+        <p class="muted tiny">While closed, alerts cannot be guaranteed yet. Lock-screen notifications require iPhone notification permission and the installed Home Screen app; this trial only monitors queues while the app is running.</p>
+      </section>
 
       <section class="controls card"><div class="control-grid"><label><span>Current area</span><select id="locationSelect"></select></label><label><span>Mode</span><select id="modeSelect"><option value="balanced">Balanced</option><option value="lowWalk">Low walking</option><option value="queueHunter">Queue hunter</option><option value="rain">Rain / indoor bias</option></select></label></div><div class="toggle-row"><label class="switch-label"><input type="checkbox" id="singleRiderToggle" /> Consider Single Rider</label><label class="switch-label"><input type="checkbox" id="parkHopToggle" /> Consider the other park</label><label class="switch-label"><input type="checkbox" id="softPlansToggle" /> Block time for soft plans</label><label class="switch-label"><input type="checkbox" id="precisionRoutingToggle" checked /> Precision routing (TEST · pushchair)</label></div></section>
 
@@ -66,5 +82,5 @@
   </main>
   <footer><div>Independent trip tool, not affiliated with Disney.</div><div>Primary live data: <a href="https://themeparks.wiki/" target="_blank" rel="noreferrer">ThemeParks.wiki</a>. Secondary cross-check: <a href="https://queue-times.com/" target="_blank" rel="noreferrer">Powered by Queue-Times.com</a> via the DLP Dispatcher proxy.</div></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastUndo" type="button" hidden>Undo</button></div>
-  <script src="app.js?v=0.9.2"></script>
+  <script src="app.js?v=0.9.3"></script>
 </body></html>
