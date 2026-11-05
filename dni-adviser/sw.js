@@ -1,5 +1,5 @@
 /* Public training app shell only. Do not cache incident or person data. */
-const CACHE='dni-adviser-shell-v07';
+const CACHE='dni-adviser-shell-v08';
 const ASSETS=['./','./index.html','./app.webmanifest','./icon.svg'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(x=>x.startsWith('dni-adviser-')&&x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
